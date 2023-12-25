@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "896337234287",
+    "project_id": "modern-chat-app-cc6e7",
+    "storage_bucket": "modern-chat-app-cc6e7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:896337234287:android:8bbb481a7a7114c2b8009a",
+        "android_client_info": {
+          "package_name": "com.example.modern_chat_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8BO_SRX1tG64VsXR13kWT0_Cex-ljOY8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

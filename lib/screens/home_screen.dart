@@ -1,4 +1,5 @@
 import 'package:chat_app/models/user_model.dart';
+import 'package:chat_app/screens/chat_screen.dart';
 import 'package:chat_app/screens/getting_started_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text(
           "Chat-Buddy",
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onBackground,
+            color: Theme.of(context).colorScheme.onPrimary,
           ),
         ),
         actions: [
@@ -50,7 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 _signOutUser();
               },
-              icon: const Icon(Icons.logout))
+              icon:  Icon(Icons.logout,
+              
+              color: Theme.of(context).colorScheme.onPrimary,))
         ],
       ),
       backgroundColor: Theme.of(context).colorScheme.background,
@@ -62,6 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection("users").snapshots(),
       builder: (context, snapshot) {
+        if(snapshot.connectionState == ConnectionState.none){
+          return const Center(child: CircularProgressIndicator(),);
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(),
@@ -69,13 +75,17 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         if (snapshot.hasData) {
+
           return ListView(
+            
             children:
                 snapshot.data!.docs.map((doc) => listUserItem(doc)).toList(),
           );
+        }else{
+          return const Center(child: CircularProgressIndicator(),);
         }
 
-        return const SizedBox();
+       
       },
     );
   }
@@ -85,9 +95,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (_auth.currentUser!.email != user.email) {
       return ListTile(
-        title: Text(user.email),
+        onTap: (){
+          _onTapChat(recieverUserName: user.username,recieverId: user.uid);
+        },
+        contentPadding: const EdgeInsets.all(10),
+        shape: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+          )
+        ),
+        title: Text(user.username),
+        
       );
     }
     return const SizedBox();
+  }
+  _onTapChat({required String recieverId,required String recieverUserName }){
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatScreen(recieverId: recieverId, recieverUserName: recieverUserName)));
   }
 }

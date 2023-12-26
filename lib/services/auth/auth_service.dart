@@ -25,21 +25,21 @@ class AuthService extends ChangeNotifier {
     return await FirebaseAuth.instance.signOut();
   }
 
-  Future<UserCredential> signUpWithEmailAndPassword(
-      String email, String password) async {
-    try {
-      UserCredential credential = await auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+  // Future<UserCredential> signUpWithEmailAndPassword(
+  //     String email, String password) async {
+  //   try {
+  //     UserCredential credential = await auth.createUserWithEmailAndPassword(
+  //         email: email, password: password);
 
-      var user =
-          UserModel(uid: credential.user!.uid, email: credential.user!.email!);
-      _firestore
-          .collection("users")
-          .doc(credential.user!.uid)
-          .set(user.toMap());
-      return credential;
-    } on FirebaseAuthMultiFactorException catch (e) {
-      throw Exception(e.code);
-    }
-  }
+  //     var user =
+  //         UserModel(uid: credential.user!.uid, email: credential.user!.email!);
+  //     _firestore
+  //         .collection("users")
+  //         .doc(credential.user!.uid)
+  //         .set(user.toMap());
+  //     return credential;
+  //   } on FirebaseAuthMultiFactorException catch (e) {
+  //     throw Exception(e.code);
+  //   }
+  // }
 }

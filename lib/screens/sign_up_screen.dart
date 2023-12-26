@@ -21,17 +21,19 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
+  late TextEditingController _usernameController;
   bool isPasswordVisible = true;
   bool isRememberMe = false;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+ CrossFadeState _state = CrossFadeState.showFirst;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _usernameController = TextEditingController();
   }
 
   @override
@@ -103,121 +105,240 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(25, 15, 25, 25),
                     child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          SizedBox(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      child: AnimatedCrossFade(
+                        sizeCurve: Curves.linear,
+                        firstCurve: Curves.easeIn,
+                        secondCurve: Curves.easeOut,
+                        duration: const Duration(milliseconds: 500),
+                        crossFadeState: _state,
+                        firstChild: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(
+                              height:60,
+                            ),
+                            SizedBox(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Enter Username",
+                                    style: TextStyle(
+                                        fontFamily: "poppins",
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onBackground),
+                                  ),
+                                  const SizedBox(
+                                    height: 8,
+                                  ),
+                                  CustomTextField(
+                                    onSufficIconPressed: () {},
+                                    obscureText: false,
+                                    keyboardType: TextInputType.text,
+                                    controller: _usernameController,
+                                    prefixIcon: Icons.person,
+                                    suffixIcon: Icons.arrow_right,
+                                    hintText: "Enter a Username",
+                                    isSuffixIconVisible: false,
+                                  ),
+                                  
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 50,
+                            ),
+                            CustomButton(
+                                width: double.infinity,
+                                onPressed: () {
+
+                                  var username = _usernameController.text.trim().toString();
+                                 if(username.length>5){
+
+                                  if(username.isNotEmpty){
+
+                                 _onTapCrossfadeChange();
+                                  }
+                                  else{
+                                    EasyLoading.showToast("Enter Username",toastPosition: EasyLoadingToastPosition.bottom);
+                                  }
+                                 }
+                                 else{
+                                  EasyLoading.showToast("Length must be greater than 5 characters",
+                                  
+                                  toastPosition: EasyLoadingToastPosition.bottom);
+                                 }
+                                  
+                                },
+                                btnTitle: "Continue",
+                                bgColor: Theme.of(context).colorScheme.primary,
+                                fgColor: Colors.white,
+                                height: 50),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Enter Email",
+                                  "Already have an account?",
                                   style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onBackground,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 5,
+                                ),
+                                GestureDetector(
+                                  onTap: _onTapLogin,
+                                  child: Text(
+                                    "Login",
+                                    style: TextStyle(
                                       fontFamily: "poppins",
-                                      fontWeight: FontWeight.w500,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onBackground),
-                                ),
-                                const SizedBox(
-                                  height: 8,
-                                ),
-                                CustomTextField(
-                                  onSufficIconPressed: () {},
-                                  obscureText: false,
-                                  keyboardType: TextInputType.emailAddress,
-                                  controller: _emailController,
-                                  prefixIcon: Icons.mail,
-                                  suffixIcon: Icons.arrow_right,
-                                  hintText: "Enter Your Email",
-                                  isSuffixIconVisible: false,
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                Text(
-                                  "Enter Password",
-                                  style: TextStyle(
-                                      fontFamily: "poppins",
-                                      fontWeight: FontWeight.w500,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onBackground),
-                                ),
-                                const SizedBox(
-                                  height: 8,
-                                ),
-                                CustomTextField(
-                                    onSufficIconPressed: () {
-                                      setState(() {
-                                        isPasswordVisible = !isPasswordVisible;
-                                      });
-                                    },
-                                    obscureText: isPasswordVisible,
-                                    controller: _passwordController,
-                                    keyboardType: TextInputType.visiblePassword,
-                                    prefixIcon: Icons.lock,
-                                    suffixIcon: isPasswordVisible
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
-                                    hintText: "Enter Your Password",
-                                    isSuffixIconVisible: true),
-                                const SizedBox(
-                                  height: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                )
+                              ],
+                            )
+                          ],
+                        ),
+                        secondChild: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            SizedBox(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                 
+                                  Text(
+                                    "Enter Email",
+                                    style: TextStyle(
+                                        fontFamily: "poppins",
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onBackground),
+                                  ),
+                                  const SizedBox(
+                                    height: 8,
+                                  ),
+                                  CustomTextField(
+                                    onSufficIconPressed: () {},
+                                    obscureText: false,
+                                    keyboardType: TextInputType.emailAddress,
+                                    controller: _emailController,
+                                    prefixIcon: Icons.mail,
+                                    suffixIcon: Icons.arrow_right,
+                                    hintText: "Enter Your Email",
+                                    isSuffixIconVisible: false,
+                                  ),
+                                  const SizedBox(
+                                    height: 20,
+                                  ),
+                                  Text(
+                                    "Enter Password",
+                                    style: TextStyle(
+                                        fontFamily: "poppins",
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onBackground),
+                                  ),
+                                  const SizedBox(
+                                    height: 8,
+                                  ),
+                                  CustomTextField(
+                                      onSufficIconPressed: () {
+                                        setState(() {
+                                          isPasswordVisible = !isPasswordVisible;
+                                        });
+                                      },
+                                      obscureText: isPasswordVisible,
+                                      controller: _passwordController,
+                                      keyboardType: TextInputType.visiblePassword,
+                                      prefixIcon: Icons.lock,
+                                      suffixIcon: isPasswordVisible
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                      hintText: "Enter Your Password",
+                                      isSuffixIconVisible: true),
+                                  const SizedBox(
+                                    height: 11,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 50,
+                            ),
+                            Row(
+                              children: [
+
+                                 Expanded(child: CustomButton(width: double.infinity, onPressed: _onTapCrossfadeChange, btnTitle: "Back", bgColor: Theme.of(context).colorScheme.primary.withOpacity(0.8), fgColor: Theme.of(context).colorScheme.onPrimary, height: 50)),
+                                 const SizedBox(width: 5,),
+                                Expanded(
+                                  child: CustomButton(
+                                      width: double.infinity,
+                                      onPressed: () {
+                                        _onTapSignUp();
+                                      },
+                                      btnTitle: "Sign Up",
+                                      bgColor: Theme.of(context).colorScheme.primary,
+                                      fgColor: Colors.white,
+                                      height: 50),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(
-                            height: 50,
-                          ),
-                          CustomButton(
-                              width: double.infinity,
-                              onPressed: () {
-                                _onTapSignUp();
-                              },
-                              btnTitle: "Sign Up",
-                              bgColor: Theme.of(context).colorScheme.primary,
-                              fgColor: Colors.white,
-                              height: 50),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Already have an account?",
-                                style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onBackground,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 5,
-                              ),
-                              GestureDetector(
-                                onTap: _onTapLogin,
-                                child: Text(
-                                  "Login",
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Already have an account?",
                                   style: TextStyle(
-                                    fontFamily: "poppins",
-                                    fontWeight: FontWeight.w600,
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                    decoration: TextDecoration.underline,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onBackground,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                 ),
-                              )
-                            ],
-                          )
-                        ],
+                                const SizedBox(
+                                  width: 5,
+                                ),
+                                GestureDetector(
+                                  onTap: _onTapLogin,
+                                  child: Text(
+                                    "Login",
+                                    style: TextStyle(
+                                      fontFamily: "poppins",
+                                      fontWeight: FontWeight.w600,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                )
+                              ],
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -228,6 +349,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       ),
     );
+  }
+
+  _onTapCrossfadeChange(){
+    setState(() {
+      if(_state == CrossFadeState.showFirst){
+          _state = CrossFadeState.showSecond;
+      }
+      else{
+        _state = CrossFadeState.showFirst;
+      }
+    });
   }
 
   _onTapSignUp() async {
@@ -241,7 +373,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         await _auth
             .createUserWithEmailAndPassword(email: email, password: password)
             .then((value) async {
-          var user = UserModel(uid: value.user!.uid, email: value.user!.email!);
+          var user = UserModel(uid: value.user!.uid, email: value.user!.email!,username: _usernameController.text.toString());
           _firestore
               .collection('users')
               .doc(user.uid)
@@ -264,6 +396,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
+
   _navigateToHomePage() {
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => const HomeScreen()));
@@ -271,7 +404,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   _setUserPref(String uid) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-
+    prefs.setString("username", _usernameController.text.toString());
     prefs.setString("token", uid);
   }
 
@@ -282,5 +415,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         builder: (context) => const LoginScreen(),
       ),
     );
+
   }
+  
 }

@@ -22,6 +22,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
+  late TextEditingController _usernameController;
   bool isPasswordVisible = true;
   bool isRememberMe = false;
 
@@ -34,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _usernameController = TextEditingController();
   }
 
   @override
@@ -42,6 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _usernameController.dispose();
   }
 
   @override
@@ -275,6 +278,9 @@ class _LoginScreenState extends State<LoginScreen> {
     var email = _emailController.text.trim().toString();
     var password = _passwordController.text.trim().toString();
 
+    SharedPreferences prefs =await SharedPreferences.getInstance();
+    var userName = prefs.getString("username")?? "";
+
     if (email.isNotEmpty && password.isNotEmpty) {
       // var authService = context.read<AuthService>();
       EasyLoading.show(status: "Loading...");
@@ -282,7 +288,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await _auth
             .signInWithEmailAndPassword(email: email, password: password)
             .then((value) {
-          var user = UserModel(uid: value.user!.uid, email: value.user!.email!);
+          var user = UserModel(uid: value.user!.uid, email: value.user!.email!,username: userName);
           _firestore.collection("users").doc(user.uid).set(
                 user.toMap(),
               );

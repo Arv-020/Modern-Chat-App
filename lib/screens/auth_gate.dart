@@ -1,5 +1,6 @@
 import 'package:chat_app/screens/getting_started_screen.dart';
 import 'package:chat_app/screens/home_screen.dart';
+import 'package:chat_app/screens/navigation_bar_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +14,7 @@ class AuthGate extends StatelessWidget {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return const HomeScreen();
+            return const NavigationBarScreen();
           } else {
             return const GettingStartedScreen();
           }

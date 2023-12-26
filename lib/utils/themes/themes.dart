@@ -6,6 +6,7 @@ final ThemeData lightTheme = ThemeData(
       primary: Color(0xff6A40C9),
       secondary: Colors.black,
       background: Colors.white,
+      onPrimary: Colors.white,
       onBackground: Colors.black,
     ));
 final ThemeData darkTheme = ThemeData(
@@ -13,6 +14,7 @@ final ThemeData darkTheme = ThemeData(
     colorScheme: const ColorScheme.dark(
       primary: Color(0xff6A40C9),
       secondary: Colors.black,
+      onPrimary: Colors.white,
       background: Colors.black,
       onBackground: Colors.white,
     ));

@@ -1,6 +1,8 @@
 
 import 'dart:developer' as console show log;
 import 'package:chat_app/models/chat_message_model.dart';
+import 'package:chat_app/models/notification_model.dart';
+import 'package:chat_app/services/api_services.dart';
 import 'package:chat_app/services/chat_services/chat_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,9 +12,9 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:provider/provider.dart';
 
 class ChatScreen extends StatefulWidget {
-   const ChatScreen({super.key, required this.recieverId, required this.recieverUserName});
+   const ChatScreen({super.key, required this.recieverId, required this.recieverUserName, required this.token});
 final String recieverId;
-
+final String token;
 final String recieverUserName;
 
   @override
@@ -133,10 +135,10 @@ late TextEditingController _messageController ;
 
  Widget chatMessageItemWidget(DocumentSnapshot document){
    var chatMessage =  ChatMessageModel.fromMap(document.data() as Map<String,dynamic>);
-
+  bool isSendedByMe = chatMessage.senderId == _auth.currentUser!.uid;
    return Container(
     
-    alignment: chatMessage.senderId == _auth.currentUser!.uid ? Alignment.bottomRight : Alignment.bottomLeft  ,
+    alignment: isSendedByMe? Alignment.bottomRight : Alignment.bottomLeft  ,
     margin: const EdgeInsets.only(bottom: 11,top: 11),
     
     child: Column(
@@ -147,7 +149,7 @@ late TextEditingController _messageController ;
    
           decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.primary,
-     borderRadius: const BorderRadius.horizontal(left: Radius.circular(10))
+     borderRadius: BorderRadius.horizontal(left: Radius.circular(isSendedByMe?10:0),right: Radius.circular(isSendedByMe?0:10) )
           ),
           padding: const EdgeInsets.fromLTRB(30, 11, 20, 11),
           child: Text(chatMessage.message,
@@ -204,13 +206,20 @@ late TextEditingController _messageController ;
   );
  }
  
-  void _onTapSend() {
+  void _onTapSend() async{
 
     
     var message = _messageController.text.trim().toString();
     if(message.isNotEmpty){
     context.read<ChatService>().sendMessage(widget.recieverId, message);
+    
 
+    var notificationResult = await ApiService.sendMessage(notification: NotificationModel(token: widget.token, data: NotificationData(recieverId: widget.recieverId, recieverUserName: widget.recieverUserName,token: widget.token), notification: NotificationBody(body:message)));
+
+
+    if(notificationResult==0){
+      EasyLoading.showToast("Failed to send Notification",toastPosition: EasyLoadingToastPosition.bottom);
+    }
     FocusManager.instance.primaryFocus?.unfocus();
      
     }

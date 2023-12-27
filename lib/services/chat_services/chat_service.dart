@@ -53,12 +53,11 @@ Future<void> deleteMessage(String recieverId) async{
     List<String> dns = [recieverId,senderId];
     dns.sort();
     final String chatRoomId = dns.join("_");
-
+     
    // returning snapshots of doc
     return _firestore.collection("chat_room").doc(chatRoomId).collection("messages").orderBy("timeStamp",descending: true).snapshots();
     
-
-
+    
   }
 
    

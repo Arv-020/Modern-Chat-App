@@ -6,6 +6,7 @@ import 'package:chat_app/widgets/custom_button.dart';
 import 'package:chat_app/widgets/custom_textfield.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lottie/lottie.dart';
@@ -287,8 +288,10 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         await _auth
             .signInWithEmailAndPassword(email: email, password: password)
-            .then((value) {
-          var user = UserModel(uid: value.user!.uid, email: value.user!.email!,username: userName);
+            .then((value) async{
+     var token = await FirebaseMessaging.instance.getToken();
+
+          var user = UserModel(token: token!,uid: value.user!.uid, email: value.user!.email!,username: userName);
           _firestore.collection("users").doc(user.uid).set(
                 user.toMap(),
               );

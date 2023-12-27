@@ -39,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(
           "Chat-Buddy",
@@ -96,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_auth.currentUser!.email != user.email) {
       return ListTile(
         onTap: (){
-          _onTapChat(recieverUserName: user.username,recieverId: user.uid);
+          _onTapChat(recieverUserName: user.username,recieverId: user.uid,token: user.token,);
         },
         contentPadding: const EdgeInsets.all(10),
         shape: Border(
@@ -110,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return const SizedBox();
   }
-  _onTapChat({required String recieverId,required String recieverUserName }){
-              Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatScreen(recieverId: recieverId, recieverUserName: recieverUserName)));
+  _onTapChat({required String recieverId,required String recieverUserName ,required String token }){
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatScreen(token: token,recieverId: recieverId, recieverUserName: recieverUserName)));
   }
 }

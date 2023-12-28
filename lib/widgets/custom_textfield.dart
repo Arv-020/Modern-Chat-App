@@ -33,7 +33,7 @@ class CustomTextField extends StatelessWidget {
           prefixIcon: Icon(prefixIcon),
           hintStyle: TextStyle(
             fontFamily: "poppins",
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
             fontSize: 14,
           ),
           suffixIcon: isSuffixIconVisible

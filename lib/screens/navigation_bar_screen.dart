@@ -1,5 +1,6 @@
+import 'package:chat_app/screens/chat_list_screen.dart';
 import 'package:chat_app/screens/home_screen.dart';
-import 'package:chat_app/screens/message_screen.dart';
+
 import 'package:chat_app/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -135,7 +136,7 @@ setState(() {
     return const HomeScreen();
    }
    else if(selectedIndex==1){
-     return const MessageScreen();
+     return const ChatListScreen();
    }
    else{
     return const ProfileScreen();

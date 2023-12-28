@@ -1,3 +1,4 @@
+import 'package:chat_app/controllers/user_data_provider.dart';
 import 'package:chat_app/screens/splash_screen.dart';
 import 'package:chat_app/services/auth/auth_service.dart';
 import 'package:chat_app/services/chat_services/chat_service.dart';
@@ -14,6 +15,7 @@ import 'firebase_options.dart';
 final navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
+  
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -24,7 +26,8 @@ void main() async {
       ChangeNotifierProvider(
         create: (context) => AuthService(),
       ),
-      ChangeNotifierProvider(create: (context) => ChatService())
+      ChangeNotifierProvider(create: (context) => ChatService()),
+      ChangeNotifierProvider(create: (context) => UserDataProvider())
     ],
     child: const MyApp(),
   ));

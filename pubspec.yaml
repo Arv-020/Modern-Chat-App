@@ -45,6 +45,9 @@ dependencies:
   group_list_view: ^1.1.1
   firebase_messaging: ^14.7.9
   http: ^1.1.2
+  unicons: ^2.1.1
+  firebase_storage: ^11.5.6
+  image_picker: ^1.0.5
 
 dev_dependencies:
   flutter_test:

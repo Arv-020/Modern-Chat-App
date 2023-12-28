@@ -211,22 +211,24 @@ late TextEditingController _messageController ;
     
     var message = _messageController.text.trim().toString();
     if(message.isNotEmpty){
-    context.read<ChatService>().sendMessage(widget.recieverId, message);
-    
+    context.read<ChatService>().sendMessage(widget.recieverId, message).then((value) async{
+
+
+    _messageController.clear();
+    FocusManager.instance.primaryFocus?.unfocus();
 
     var notificationResult = await ApiService.sendMessage(notification: NotificationModel(token: widget.token, data: NotificationData(recieverId: widget.recieverId, recieverUserName: widget.recieverUserName,token: widget.token), notification: NotificationBody(body:message)));
-
-
+    
     if(notificationResult==0){
       EasyLoading.showToast("Failed to send Notification",toastPosition: EasyLoadingToastPosition.bottom);
     }
-    FocusManager.instance.primaryFocus?.unfocus();
+    });
+    
+
+
      
     }
-    else{
-      
-    }
+    
 
-    _messageController.clear();
   }
 }

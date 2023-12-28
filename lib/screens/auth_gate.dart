@@ -1,5 +1,5 @@
 import 'package:chat_app/screens/getting_started_screen.dart';
-import 'package:chat_app/screens/home_screen.dart';
+import 'package:chat_app/screens/chat_list_screen.dart';
 import 'package:chat_app/screens/navigation_bar_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

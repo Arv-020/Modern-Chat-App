@@ -50,6 +50,7 @@ class NotificationData {
 
   Map<String,dynamic> toMap(){
     return {
+      "token":token,
     "recieverId":recieverId,
     "recieverUserName":recieverUserName
     };

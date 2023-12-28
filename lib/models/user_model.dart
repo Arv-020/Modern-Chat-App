@@ -3,10 +3,21 @@ class UserModel {
   final String email;
   final String username;
   final String token;
-  UserModel({required this.token,required this.username ,required this.uid, required this.email});
+  final String profileImage;
+  UserModel(
+      {required this.profileImage,
+      required this.token,
+      required this.username,
+      required this.uid,
+      required this.email});
 
   factory UserModel.fromMap(Map<String, dynamic> data) {
-    return UserModel(uid: data["uid"], email: data["email"],username: data["username"],token: data["token"]);
+    return UserModel(
+        uid: data["uid"],
+        email: data["email"],
+        username: data["username"],
+        token: data["token"],
+        profileImage: data["profileImage"]);
   }
 
   Map<String, dynamic> toMap() {
@@ -14,7 +25,8 @@ class UserModel {
       "uid": uid,
       "email": email,
       "username":username,
-      "token":token
+      "token": token,
+      "profileImage": profileImage
     };
   }
 }

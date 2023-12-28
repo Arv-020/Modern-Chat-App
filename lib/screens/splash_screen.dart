@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:chat_app/screens/auth_gate.dart';
+import 'package:chat_app/screens/getting_started_screen.dart';
+import 'package:chat_app/screens/navigation_bar_screen.dart';
 import 'package:chat_app/utils/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -23,9 +26,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void navigateToPage() async {
     if (!mounted) return;
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     Timer(const Duration(seconds: 4), () {
+      
+     String? token = prefs.getString("token") ;
+
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => const AuthGate()));
+          context, MaterialPageRoute(builder: (context) => token==null?const GettingStartedScreen():const NavigationBarScreen()));
     });
   }
 

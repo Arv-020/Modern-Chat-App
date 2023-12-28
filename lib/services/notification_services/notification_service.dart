@@ -14,13 +14,15 @@ Future<void>  handleMessage(RemoteMessage? message) async{
 
   
   var messageData = NotificationData.fromMap(message.data);
+
+  console.log(message.data.toString());
   navigatorKey.currentState?.push(MaterialPageRoute(builder: (context)=>
   ChatScreen(recieverId: messageData.recieverId, recieverUserName: messageData.recieverUserName, token: messageData.token) ));  
 
 }  
 
 
-Future<void> initPushNotification() async{
+Future initPushNotification() async{
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
     alert: true,
     badge: true,
@@ -28,7 +30,7 @@ Future<void> initPushNotification() async{
   );
   
   
-  FirebaseMessaging.instance.getInitialMessage().then(handleMessage);
+  await FirebaseMessaging.instance.getInitialMessage().then(handleMessage);
   FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);
   FirebaseMessaging.onBackgroundMessage(handleMessage);
 }
@@ -37,7 +39,7 @@ Future<void> initPushNotification() async{
     
 Future<void> initNotifications() async{
      await _fireBaseMessaging.requestPermission();
-     var fcmToken =await _fireBaseMessaging.getToken();  
+     var fcmToken = await _fireBaseMessaging.getToken();  
      console.log(fcmToken.toString());
      initPushNotification();
     }

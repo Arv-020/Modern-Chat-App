@@ -1,14 +1,20 @@
+import 'dart:io';
+
 import 'package:chat_app/models/user_model.dart';
-import 'package:chat_app/screens/home_screen.dart';
+import 'dart:developer' as console show log;
+import 'package:chat_app/screens/chat_list_screen.dart';
 import 'package:chat_app/screens/login_screen.dart';
+import 'package:chat_app/screens/navigation_bar_screen.dart';
 import 'package:chat_app/utils/constants/app_constants.dart';
 import 'package:chat_app/widgets/custom_button.dart';
 import 'package:chat_app/widgets/custom_textfield.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,7 +33,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool isRememberMe = false;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
- CrossFadeState _state = CrossFadeState.showFirst;
+  CrossFadeState _state = CrossFadeState.showFirst;
   @override
   void initState() {
     // TODO: implement initState
@@ -44,6 +50,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
   }
+
+  String imageUrl = "";
 
   @override
   Widget build(BuildContext context) {
@@ -117,13 +125,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const SizedBox(
-                              height:60,
+                              height: 20,
                             ),
                             SizedBox(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Center(
+                                    child: GestureDetector(
+                                      onTap: _onTapProfile,
+                                      child: Stack(
+                                        alignment: Alignment.bottomRight,
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 50,
+                                            backgroundImage: NetworkImage(imageUrl
+                                                    .isEmpty
+                                                ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
+                                                : imageUrl),
+                                          ),
+                                          CircleAvatar(
+                                              radius: 20,
+                                              backgroundColor:
+                                                  Colors.grey.withOpacity(0.6),
+                                              child: const Icon(Icons.brush))
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
                                   Text(
                                     "Enter Username",
                                     style: TextStyle(
@@ -146,7 +179,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     hintText: "Enter a Username",
                                     isSuffixIconVisible: false,
                                   ),
-                                  
                                 ],
                               ),
                             ),
@@ -156,24 +188,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             CustomButton(
                                 width: double.infinity,
                                 onPressed: () {
-
-                                  var username = _usernameController.text.trim().toString();
-                                 if(username.length>5){
-
-                                  if(username.isNotEmpty){
-
-                                 _onTapCrossfadeChange();
+                                  var username = _usernameController.text
+                                      .trim()
+                                      .toString();
+                                  if (username.length > 5) {
+                                    if (username.isNotEmpty) {
+                                      _onTapCrossfadeChange();
+                                    } else {
+                                      EasyLoading.showToast("Enter Username",
+                                          toastPosition:
+                                              EasyLoadingToastPosition.bottom);
+                                    }
+                                  } else {
+                                    EasyLoading.showToast(
+                                        "Length must be greater than 5 characters",
+                                        toastPosition:
+                                            EasyLoadingToastPosition.bottom);
                                   }
-                                  else{
-                                    EasyLoading.showToast("Enter Username",toastPosition: EasyLoadingToastPosition.bottom);
-                                  }
-                                 }
-                                 else{
-                                  EasyLoading.showToast("Length must be greater than 5 characters",
-                                  
-                                  toastPosition: EasyLoadingToastPosition.bottom);
-                                 }
-                                  
                                 },
                                 btnTitle: "Continue",
                                 bgColor: Theme.of(context).colorScheme.primary,
@@ -225,7 +256,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                 
                                   Text(
                                     "Enter Email",
                                     style: TextStyle(
@@ -266,12 +296,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   CustomTextField(
                                       onSufficIconPressed: () {
                                         setState(() {
-                                          isPasswordVisible = !isPasswordVisible;
+                                          isPasswordVisible =
+                                              !isPasswordVisible;
                                         });
                                       },
                                       obscureText: isPasswordVisible,
                                       controller: _passwordController,
-                                      keyboardType: TextInputType.visiblePassword,
+                                      keyboardType:
+                                          TextInputType.visiblePassword,
                                       prefixIcon: Icons.lock,
                                       suffixIcon: isPasswordVisible
                                           ? Icons.visibility
@@ -289,9 +321,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             Row(
                               children: [
-
-                                 Expanded(child: CustomButton(width: double.infinity, onPressed: _onTapCrossfadeChange, btnTitle: "Back", bgColor: Theme.of(context).colorScheme.primary.withOpacity(0.8), fgColor: Theme.of(context).colorScheme.onPrimary, height: 50)),
-                                 const SizedBox(width: 5,),
+                                Expanded(
+                                    child: CustomButton(
+                                        width: double.infinity,
+                                        onPressed: _onTapCrossfadeChange,
+                                        btnTitle: "Back",
+                                        bgColor: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.8),
+                                        fgColor: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary,
+                                        height: 50)),
+                                const SizedBox(
+                                  width: 5,
+                                ),
                                 Expanded(
                                   child: CustomButton(
                                       width: double.infinity,
@@ -299,7 +344,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         _onTapSignUp();
                                       },
                                       btnTitle: "Sign Up",
-                                      bgColor: Theme.of(context).colorScheme.primary,
+                                      bgColor:
+                                          Theme.of(context).colorScheme.primary,
                                       fgColor: Colors.white,
                                       height: 50),
                                 ),
@@ -352,12 +398,109 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  _onTapCrossfadeChange(){
+  _onTapProfile() {
+    _customModalBottomSheet();
+  }
+
+  void _customModalBottomSheet() {
+    showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return SizedBox(
+            height: 100,
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                  decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: const Text(
+                    "Choose the Option",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Row(
+                  // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _customMenuItem(
+                        icon: Icons.camera,
+                        borderRadius: const BorderRadius.only(
+                            bottomRight: Radius.circular(10)),
+                        onPressed: () {
+                          _pickAndUploadImage(ImageSource.camera);
+                        }),
+                    const SizedBox(
+                      width: 1,
+                    ),
+                    _customMenuItem(
+                        icon: Icons.image,
+                        borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(10)),
+                        onPressed: () {
+                          _pickAndUploadImage(ImageSource.gallery);
+                        }),
+                  ],
+                ),
+              ],
+            ),
+          );
+        });
+  }
+
+  void _pickAndUploadImage(ImageSource imageSource) async {
+    ImagePicker imagePicker = ImagePicker();
+    console.log("We are almost there");
+    XFile? file = await imagePicker.pickImage(source: imageSource);
+    if (file == null) return;
+    Reference firebaseStorage = FirebaseStorage.instance.ref();
+    Reference firebaseImageDir = firebaseStorage.child("Images");
+    Reference firebaseImageName = firebaseImageDir.child(file.name);
+
+    try {
+      await firebaseImageName.putFile(File(file.path));
+
+      imageUrl = await firebaseImageName.getDownloadURL();
+      setState(() {});
+      console.log(imageUrl);
+    } catch (error) {
+      EasyLoading.showToast("$error",
+          toastPosition: EasyLoadingToastPosition.bottom);
+    }
+  }
+
+  Widget _customMenuItem(
+      {required VoidCallback onPressed,
+      required IconData icon,
+      required BorderRadius borderRadius}) {
+    return Expanded(
+      child: InkWell(
+        onTap: onPressed,
+        child: Container(
+          width: 50,
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            borderRadius: borderRadius,
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          ),
+          child: Icon(icon),
+        ),
+      ),
+    );
+  }
+
+  _onTapCrossfadeChange() {
     setState(() {
-      if(_state == CrossFadeState.showFirst){
-          _state = CrossFadeState.showSecond;
-      }
-      else{
+      if (_state == CrossFadeState.showFirst) {
+        _state = CrossFadeState.showSecond;
+      } else {
         _state = CrossFadeState.showFirst;
       }
     });
@@ -374,9 +517,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
         await _auth
             .createUserWithEmailAndPassword(email: email, password: password)
             .then((value) async {
-
           var token = await FirebaseMessaging.instance.getToken();
-          var user = UserModel(token: token!,uid: value.user!.uid, email: value.user!.email!,username: _usernameController.text.toString());
+
+          var user = UserModel(
+              profileImage: imageUrl,
+              token: token!,
+              uid: value.user!.uid,
+              email: value.user!.email!,
+              username: _usernameController.text.toString());
           _firestore
               .collection('users')
               .doc(user.uid)
@@ -384,7 +532,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
           EasyLoading.showToast("Account Created SuccessFully",
               toastPosition: EasyLoadingToastPosition.bottom);
-          _setUserPref(value.user?.uid ?? "");
+          _setUserPref(token);
           _navigateToHomePage();
         });
       } catch (e) {
@@ -399,16 +547,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-
   _navigateToHomePage() {
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) => const NavigationBarScreen()));
   }
 
-  _setUserPref(String uid) async {
+  _setUserPref(String token) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString("username", _usernameController.text.toString());
-    prefs.setString("token", uid);
+    prefs.setString("profileImage", imageUrl);
+    prefs.setString("token", token);
   }
 
   _onTapLogin() {
@@ -418,7 +566,5 @@ class _SignUpScreenState extends State<SignUpScreen> {
         builder: (context) => const LoginScreen(),
       ),
     );
-
   }
-  
 }

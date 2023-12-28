@@ -1,5 +1,6 @@
 import 'package:chat_app/models/user_model.dart';
-import 'package:chat_app/screens/home_screen.dart';
+import 'package:chat_app/screens/chat_list_screen.dart';
+import 'package:chat_app/screens/navigation_bar_screen.dart';
 import 'package:chat_app/screens/sign_up_screen.dart';
 import 'package:chat_app/utils/constants/app_constants.dart';
 import 'package:chat_app/widgets/custom_button.dart';
@@ -281,6 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     SharedPreferences prefs =await SharedPreferences.getInstance();
     var userName = prefs.getString("username")?? "";
+    var profileImage = prefs.getString("profileImage") ?? "";
 
     if (email.isNotEmpty && password.isNotEmpty) {
       // var authService = context.read<AuthService>();
@@ -289,15 +291,22 @@ class _LoginScreenState extends State<LoginScreen> {
         await _auth
             .signInWithEmailAndPassword(email: email, password: password)
             .then((value) async{
-     var token = await FirebaseMessaging.instance.getToken();
-
-          var user = UserModel(token: token!,uid: value.user!.uid, email: value.user!.email!,username: userName);
+         
+          var token = await FirebaseMessaging.instance.getToken();
+          
+         
+          var user = UserModel(
+              token: token!,
+              uid: value.user!.uid,
+              email: value.user!.email!,
+              username: userName,
+              profileImage: profileImage);
           _firestore.collection("users").doc(user.uid).set(
                 user.toMap(),
               );
           EasyLoading.showToast("Logged-In SuccessFully",
               toastPosition: EasyLoadingToastPosition.bottom);
-          _setUserPrefs(value.user?.uid ?? "");
+          _setUserPrefs(token);
           _navigateToHomePage();
         });
       } on Exception catch (e) {
@@ -314,17 +323,18 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  _setUserPrefs(String uid) async {
+  _setUserPrefs(String token) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString(
       "token",
-      uid,
+      token,
     );
   }
 
   _navigateToHomePage() {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+        context,
+        MaterialPageRoute(builder: (context) => const NavigationBarScreen()));
   }
 
   _onTapSignUp() {

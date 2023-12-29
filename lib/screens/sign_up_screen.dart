@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_app/models/user_model.dart';
 import 'dart:developer' as console show log;
 import 'package:chat_app/screens/chat_list_screen.dart';
@@ -52,6 +53,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   String imageUrl = "";
+  bool isImageLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -138,18 +140,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       child: Stack(
                                         alignment: Alignment.bottomRight,
                                         children: [
-                                          CircleAvatar(
-                                            radius: 50,
-                                            backgroundImage: NetworkImage(imageUrl
-                                                    .isEmpty
+                                          CachedNetworkImage(
+                                            imageBuilder:
+                                                (context, imageProvider) {
+                                              return CircleAvatar(
+                                                radius: 50,
+                                                backgroundImage: imageProvider,
+                                              );
+                                            },
+                                            imageUrl: imageUrl.isEmpty
                                                 ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
-                                                : imageUrl),
+                                                : imageUrl,
+                                            placeholder: (context, url) {
+                                              return CircleAvatar(
+                                                radius: 50,
+                                                backgroundColor: Colors.grey
+                                                    .withOpacity(0.4),
+                                                child: const SizedBox(
+                                                  height: 30,
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                ),
+                                              );
+                                            },
+                                            height: 100,
                                           ),
                                           CircleAvatar(
-                                              radius: 20,
-                                              backgroundColor:
-                                                  Colors.grey.withOpacity(0.6),
-                                              child: const Icon(Icons.brush))
+                                            radius: 20,
+                                            backgroundColor:
+                                                Colors.grey.withOpacity(0.6),
+                                            child: const Icon(Icons.brush),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -170,6 +191,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     height: 8,
                                   ),
                                   CustomTextField(
+                                    isPrefixVisible: true,
+                                    maxLines: 1,
+                                    isEnabled: true,
                                     onSufficIconPressed: () {},
                                     obscureText: false,
                                     keyboardType: TextInputType.text,
@@ -269,6 +293,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     height: 8,
                                   ),
                                   CustomTextField(
+                                    isPrefixVisible: true,
+                                    maxLines: 1,
+                                    isEnabled: true,
                                     onSufficIconPressed: () {},
                                     obscureText: false,
                                     keyboardType: TextInputType.emailAddress,
@@ -294,6 +321,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     height: 8,
                                   ),
                                   CustomTextField(
+                                      isPrefixVisible: true,
+                                      maxLines: 1,
+                                      isEnabled: true,
                                       onSufficIconPressed: () {
                                         setState(() {
                                           isPasswordVisible =
@@ -460,6 +490,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     console.log("We are almost there");
     XFile? file = await imagePicker.pickImage(source: imageSource);
     if (file == null) return;
+    
+    if (!mounted) return;
+    Navigator.pop(context);
+    isImageLoading = true;
+    setState(() {});
     Reference firebaseStorage = FirebaseStorage.instance.ref();
     Reference firebaseImageDir = firebaseStorage.child("Images");
     Reference firebaseImageName = firebaseImageDir.child(file.name);
@@ -468,9 +503,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await firebaseImageName.putFile(File(file.path));
 
       imageUrl = await firebaseImageName.getDownloadURL();
-      setState(() {});
+      setState(() {
+        isImageLoading = false;
+      });
+     
+    
       console.log(imageUrl);
     } catch (error) {
+      setState(() {
+        isImageLoading = false;
+      });
       EasyLoading.showToast("$error",
           toastPosition: EasyLoadingToastPosition.bottom);
     }
@@ -520,6 +562,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           var token = await FirebaseMessaging.instance.getToken();
 
           var user = UserModel(
+              bio: "",
               profileImage: imageUrl,
               token: token!,
               uid: value.user!.uid,

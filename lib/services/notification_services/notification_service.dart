@@ -1,7 +1,6 @@
 import 'package:chat_app/main.dart';
 import 'package:chat_app/models/notification_model.dart';
 import 'package:chat_app/screens/chat_screen.dart';
-import 'package:chat_app/screens/notification_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:developer' as console show log;
 
@@ -16,7 +15,8 @@ Future<void>  handleMessage(RemoteMessage? message) async{
   var messageData = NotificationData.fromMap(message.data);
 
   console.log(message.data.toString());
-  navigatorKey.currentState?.push(MaterialPageRoute(builder: (context)=>
+    navigatorKey.currentState?.push(MaterialPageRoute(
+        builder: (context) =>
   ChatScreen(recieverId: messageData.recieverId, recieverUserName: messageData.recieverUserName, token: messageData.token) ));  
 
 }  

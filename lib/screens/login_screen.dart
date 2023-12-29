@@ -134,6 +134,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   height: 8,
                                 ),
                                 CustomTextField(
+                                  isPrefixVisible: true,
+                                  maxLines: 1,
+                                  isEnabled: true,
                                   onSufficIconPressed: () {},
                                   obscureText: false,
                                   keyboardType: TextInputType.emailAddress,
@@ -159,6 +162,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   height: 8,
                                 ),
                                 CustomTextField(
+                                    isPrefixVisible: true,
+                                    maxLines: 1,
+                                    isEnabled: true,
                                     onSufficIconPressed: () {
                                       setState(() {
                                         isPasswordVisible = !isPasswordVisible;
@@ -280,9 +286,8 @@ class _LoginScreenState extends State<LoginScreen> {
     var email = _emailController.text.trim().toString();
     var password = _passwordController.text.trim().toString();
 
-    SharedPreferences prefs =await SharedPreferences.getInstance();
-    var userName = prefs.getString("username")?? "";
-    var profileImage = prefs.getString("profileImage") ?? "";
+   
+  
 
     if (email.isNotEmpty && password.isNotEmpty) {
       // var authService = context.read<AuthService>();
@@ -295,18 +300,16 @@ class _LoginScreenState extends State<LoginScreen> {
           var token = await FirebaseMessaging.instance.getToken();
           
          
-          var user = UserModel(
-              token: token!,
-              uid: value.user!.uid,
-              email: value.user!.email!,
-              username: userName,
-              profileImage: profileImage);
-          _firestore.collection("users").doc(user.uid).set(
-                user.toMap(),
+         
+          _firestore
+              .collection("users")
+              .doc(value.user!.uid)
+              .update({"token": token}
+             
               );
           EasyLoading.showToast("Logged-In SuccessFully",
               toastPosition: EasyLoadingToastPosition.bottom);
-          _setUserPrefs(token);
+          _setUserPrefs(token!);
           _navigateToHomePage();
         });
       } on Exception catch (e) {

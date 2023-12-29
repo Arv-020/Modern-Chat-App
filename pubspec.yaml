@@ -48,6 +48,7 @@ dependencies:
   unicons: ^2.1.1
   firebase_storage: ^11.5.6
   image_picker: ^1.0.5
+  cached_network_image: ^3.3.0
 
 dev_dependencies:
   flutter_test:

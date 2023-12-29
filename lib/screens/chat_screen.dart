@@ -2,6 +2,7 @@
 import 'dart:developer' as console show log;
 import 'package:chat_app/models/chat_message_model.dart';
 import 'package:chat_app/models/notification_model.dart';
+import 'package:chat_app/models/user_model.dart';
 import 'package:chat_app/services/api_services.dart';
 import 'package:chat_app/services/chat_services/chat_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,6 +25,7 @@ final String recieverUserName;
 class _ChatScreenState extends State<ChatScreen> {
 final FirebaseAuth _auth = FirebaseAuth.instance;
 late TextEditingController _messageController ;
+final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
 
 
 @override
@@ -217,7 +219,25 @@ late TextEditingController _messageController ;
     _messageController.clear();
     FocusManager.instance.primaryFocus?.unfocus();
 
-    var notificationResult = await ApiService.sendMessage(notification: NotificationModel(token: widget.token, data: NotificationData(recieverId: widget.recieverId, recieverUserName: widget.recieverUserName,token: widget.token), notification: NotificationBody(body:message)));
+        console.log(widget.recieverId);
+        console.log(_auth.currentUser!.uid);
+
+        DocumentSnapshot<Map<String, dynamic>> document =
+            await _firebaseFirestore
+                .collection("users")
+                .doc(_auth.currentUser!.uid)
+                .get();
+        var userData =
+            UserModel.fromMap(document.data() as Map<String, dynamic>);
+
+        var notificationResult = await ApiService.sendMessage(
+            notification: NotificationModel(
+                token: widget.token,
+                data: NotificationData(
+                    recieverId: _auth.currentUser!.uid,
+                    recieverUserName: userData.username,
+                    token: widget.token),
+                notification: NotificationBody(body: message)));
     
     if(notificationResult==0){
       EasyLoading.showToast("Failed to send Notification",toastPosition: EasyLoadingToastPosition.bottom);

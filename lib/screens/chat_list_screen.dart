@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_app/models/user_model.dart';
 import 'package:chat_app/screens/chat_screen.dart';
 import 'package:chat_app/screens/getting_started_screen.dart';
@@ -104,10 +105,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
             token: user.token,
           );
         },
-        leading: const CircleAvatar(
-          radius: 30,
-          backgroundImage: NetworkImage(
-              "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"),
+        leading: CachedNetworkImage(
+          imageUrl: user.profileImage,
+          height: 60,
+          placeholder: (context, url) {
+            return const CircleAvatar(
+              radius: 30,
+              backgroundColor: Colors.grey,
+              child: CircularProgressIndicator(),
+            );
+          },
+          maxHeightDiskCache: 60,
+          maxWidthDiskCache: 60,
+          imageBuilder: (context, imageProvider) {
+            return CircleAvatar(
+              radius: 30,
+              backgroundImage: imageProvider,
+            );
+          },
         ),
         contentPadding: const EdgeInsets.all(10),
         subtitle: Text(

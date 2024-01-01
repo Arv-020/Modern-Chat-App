@@ -5,45 +5,37 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:developer' as console show log;
 
 import 'package:flutter/material.dart';
+
 class NotificationService {
-    final _fireBaseMessaging = FirebaseMessaging.instance;
- 
-Future<void>  handleMessage(RemoteMessage? message) async{
-  if(message==null) return;
+  static final _fireBaseMessaging = FirebaseMessaging.instance;
 
-  
-  var messageData = NotificationData.fromMap(message.data);
+  static Future<void> handleMessage(RemoteMessage? message) async {
+    if (message == null) return;
 
-  console.log(message.data.toString());
+    var messageData = NotificationData.fromMap(message.data);
+
+    console.log(message.data.toString());
     navigatorKey.currentState?.push(MaterialPageRoute(
-        builder: (context) =>
-  ChatScreen(recieverId: messageData.recieverId, recieverUserName: messageData.recieverUserName, token: messageData.token) ));  
+        builder: (context) => ChatScreen(
+            recieverId: messageData.recieverId,
+            recieverUserName: messageData.recieverUserName,
+            token: messageData.token)));
+  }
 
-}  
+  static Future initPushNotification() async {
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+            alert: true, badge: true, sound: true);
 
+    await FirebaseMessaging.instance.getInitialMessage().then(handleMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);
+    FirebaseMessaging.onBackgroundMessage(handleMessage);
+  }
 
-Future initPushNotification() async{
-  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true
-  );
-  
-  
-  await FirebaseMessaging.instance.getInitialMessage().then(handleMessage);
-  FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);
-  FirebaseMessaging.onBackgroundMessage(handleMessage);
+  static Future<void> initNotifications() async {
+    await _fireBaseMessaging.requestPermission();
+    var fcmToken = await _fireBaseMessaging.getToken();
+    console.log(fcmToken.toString());
+    initPushNotification();
+  }
 }
-
-    
-    
-Future<void> initNotifications() async{
-     await _fireBaseMessaging.requestPermission();
-     var fcmToken = await _fireBaseMessaging.getToken();  
-     console.log(fcmToken.toString());
-     initPushNotification();
-    }
-
-
-
- }

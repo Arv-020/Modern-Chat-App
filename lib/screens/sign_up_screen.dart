@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_app/models/user_model.dart';
 import 'dart:developer' as console show log;
-import 'package:chat_app/screens/chat_list_screen.dart';
 import 'package:chat_app/screens/login_screen.dart';
 import 'package:chat_app/screens/navigation_bar_screen.dart';
 import 'package:chat_app/utils/constants/app_constants.dart';
@@ -140,31 +139,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       child: Stack(
                                         alignment: Alignment.bottomRight,
                                         children: [
-                                          CachedNetworkImage(
-                                            imageBuilder:
-                                                (context, imageProvider) {
-                                              return CircleAvatar(
-                                                radius: 50,
-                                                backgroundImage: imageProvider,
-                                              );
-                                            },
-                                            imageUrl: imageUrl.isEmpty
-                                                ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
-                                                : imageUrl,
-                                            placeholder: (context, url) {
-                                              return CircleAvatar(
-                                                radius: 50,
-                                                backgroundColor: Colors.grey
-                                                    .withOpacity(0.4),
-                                                child: const SizedBox(
-                                                  height: 30,
-                                                  child:
-                                                      CircularProgressIndicator(),
+                                          imageUrl.isEmpty
+                                              ? const CircleAvatar(
+                                                  radius: 50,
+                                                  backgroundImage: AssetImage(
+                                                      "assets/images/default-profile-image.jpeg"),
+                                                )
+                                              : CachedNetworkImage(
+                                                  imageBuilder:
+                                                      (context, imageProvider) {
+                                                    return CircleAvatar(
+                                                      radius: 50,
+                                                      backgroundImage:
+                                                          imageProvider,
+                                                    );
+                                                  },
+                                                  imageUrl: imageUrl,
+                                                  placeholder: (context, url) {
+                                                    return CircleAvatar(
+                                                      radius: 50,
+                                                      backgroundColor: Colors
+                                                          .grey
+                                                          .withOpacity(0.4),
+                                                      child: const SizedBox(
+                                                        height: 20,
+                                                        width: 20,
+                                                        child:
+                                                            CircularProgressIndicator(),
+                                                      ),
+                                                    );
+                                                  },
+                                                  height: 100,
                                                 ),
-                                              );
-                                            },
-                                            height: 100,
-                                          ),
                                           CircleAvatar(
                                             radius: 20,
                                             backgroundColor:
@@ -490,7 +496,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     console.log("We are almost there");
     XFile? file = await imagePicker.pickImage(source: imageSource);
     if (file == null) return;
-    
+
     if (!mounted) return;
     Navigator.pop(context);
     isImageLoading = true;
@@ -506,8 +512,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       setState(() {
         isImageLoading = false;
       });
-     
-    
+
       console.log(imageUrl);
     } catch (error) {
       setState(() {
@@ -560,7 +565,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
             .createUserWithEmailAndPassword(email: email, password: password)
             .then((value) async {
           var token = await FirebaseMessaging.instance.getToken();
-
+          if (imageUrl.isEmpty) {
+            imageUrl =
+                "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg";
+          }
           var user = UserModel(
               bio: "",
               profileImage: imageUrl,

@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -46,6 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _usernameController.dispose();
     _bioController.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,11 +134,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           backgroundImage: imageProvider,
                         );
                       },
-                      imageUrl: user.profileImage,
+                      imageUrl: user.profileImage.isEmpty
+                          ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
+                          : user.profileImage,
                       placeholder: (context, url) {
-                        return CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.grey.withOpacity(0.4),
+                        return Shimmer(
+                          gradient: SweepGradient(
+                              colors: [Colors.grey, Colors.grey.shade100]),
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.grey.withOpacity(0.4),
+                          ),
                         );
                       },
                       height: 100,
@@ -221,6 +229,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       "profileImage": imageUrl,
       "bio": _bioController.text.toString()
     }).then((value) {
+      isEditClicked = false;
+      setState(() {});
       EasyLoading.showToast(
         "Profile Updated Successfully",
         toastPosition: EasyLoadingToastPosition.bottom,
@@ -312,7 +322,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  
   void _pickAndUploadImage(ImageSource source) async {
     ImagePicker imagePicker = ImagePicker();
     XFile? file = await imagePicker.pickImage(source: source);
@@ -340,5 +349,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
           toastPosition: EasyLoadingToastPosition.bottom);
     }
   }
-
 }

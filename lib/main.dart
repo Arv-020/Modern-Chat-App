@@ -11,16 +11,14 @@ import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
 
-
 final navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
- await NotificationService().initNotifications();
+  await NotificationService.initNotifications();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(

@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -106,13 +107,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
           );
         },
         leading: CachedNetworkImage(
-          imageUrl: user.profileImage,
+          imageUrl: user.profileImage.isEmpty
+              ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
+              : user.profileImage,
           height: 60,
           placeholder: (context, url) {
-            return const CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.grey,
-              child: CircularProgressIndicator(),
+            return const Shimmer(
+              gradient: LinearGradient(colors: [Colors.red, Colors.green]),
+              child: CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.grey,
+              ),
             );
           },
           maxHeightDiskCache: 60,

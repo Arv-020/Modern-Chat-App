@@ -114,6 +114,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _usernameController.text = user.username;
     _bioController.text = user.bio;
     userImage = user.profileImage;
+    var profileUrl = imageUrl.isEmpty
+        ? userImage.isEmpty
+            ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
+            : userImage
+        : imageUrl;
     return Padding(
       padding: const EdgeInsets.all(25.0),
       child: SingleChildScrollView(
@@ -123,6 +128,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Center(
               child: GestureDetector(
+
+                onLongPress: () {
+                  _customImageDialog(profileUrl);
+                },
                 onTap: isEditClicked ? _onTapProfileImage : () {},
                 child: Stack(
                   alignment: Alignment.bottomRight,
@@ -134,9 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           backgroundImage: imageProvider,
                         );
                       },
-                      imageUrl: user.profileImage.isEmpty
-                          ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
-                          : user.profileImage,
+                      imageUrl: profileUrl,
                       placeholder: (context, url) {
                         return Shimmer(
                           gradient: SweepGradient(
@@ -220,7 +227,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String selectedUserName = _usernameController.text.toString();
     console.log(selectedUserName);
-
+    if (imageUrl.isEmpty) {
+      var collectionData = await _firebaseFirestore
+          .collection("users")
+          .doc(_auth.currentUser!.uid)
+          .get();
+      var userData =
+          UserModel.fromMap(collectionData.data() as Map<String, dynamic>);
+      imageUrl = userData.profileImage;
+    }
     await _firebaseFirestore
         .collection("users")
         .doc(_auth.currentUser!.uid)
@@ -247,6 +262,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       isEditClicked = true;
     });
+  }
+
+  void _customImageDialog(String imageUrl) {
+    showDialog(
+      context: context,
+      // anchorPoint: const Offset(0, 10),
+      builder: (context) {
+        return Dialog(
+          child: SizedBox(
+            height: 400,
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              placeholder: (context, url) {
+                return Shimmer(
+                    gradient: LinearGradient(
+                      colors: [Colors.grey, Colors.grey.shade100],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    child: const CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.grey,
+                    ));
+              },
+              imageBuilder: (context, imageProvider) {
+                return Container(
+                  height: 400,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: imageProvider,
+                      )),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _onTapProfileImage() {

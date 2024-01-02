@@ -96,7 +96,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Widget listUserItem(DocumentSnapshot document) {
     var user = UserModel.fromMap(document.data() as Map<String, dynamic>);
-
+    var profileUrl = user.profileImage.isEmpty
+        ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
+        : user.profileImage;
     if (_auth.currentUser!.email != user.email) {
       return ListTile(
         onTap: () {
@@ -106,28 +108,36 @@ class _ChatListScreenState extends State<ChatListScreen> {
             token: user.token,
           );
         },
-        leading: CachedNetworkImage(
-          imageUrl: user.profileImage.isEmpty
-              ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
-              : user.profileImage,
-          height: 60,
-          placeholder: (context, url) {
-            return const Shimmer(
-              gradient: LinearGradient(colors: [Colors.red, Colors.green]),
-              child: CircleAvatar(
+        leading: GestureDetector(
+          onLongPress: () {
+            _customImageDialog(profileUrl, user.username);
+          },
+          child: CachedNetworkImage(
+            imageUrl: profileUrl,
+            height: 60,
+            placeholder: (context, url) {
+              return Shimmer(
+                gradient: SweepGradient(
+                  colors: [
+                    Colors.grey,
+                    Colors.grey.shade100,
+                  ],
+                ),
+                child: const CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.grey,
+                ),
+              );
+            },
+            maxHeightDiskCache: 60,
+            maxWidthDiskCache: 60,
+            imageBuilder: (context, imageProvider) {
+              return CircleAvatar(
                 radius: 30,
-                backgroundColor: Colors.grey,
-              ),
-            );
-          },
-          maxHeightDiskCache: 60,
-          maxWidthDiskCache: 60,
-          imageBuilder: (context, imageProvider) {
-            return CircleAvatar(
-              radius: 30,
-              backgroundImage: imageProvider,
-            );
-          },
+                backgroundImage: imageProvider,
+              );
+            },
+          ),
         ),
         contentPadding: const EdgeInsets.all(10),
         subtitle: Text(
@@ -157,6 +167,65 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return const SizedBox();
   }
 
+
+_customImageDialog(String imageUrl, String name) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: CachedNetworkImage(
+            imageUrl: imageUrl,
+            placeholder: (context, url) {
+              return Shimmer(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.grey,
+                      Colors.grey.shade100,
+                    ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  child: Container(
+                    height: 400,
+                    width: double.infinity,
+                    color: Colors.grey,
+                  ));
+            },
+            maxHeightDiskCache: 60,
+            maxWidthDiskCache: 60,
+            imageBuilder: (context, imageProvider) {
+              return Container(
+                height: 400,
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                ),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: DecorationImage(
+                    fit: BoxFit.cover,
+                    image: imageProvider,
+                  ),
+                ),
+              );
+            },
+          ),
+          title: Container(
+            height: 20,
+            width: double.infinity,
+            alignment: Alignment.center,
+            child: Text(
+              name,
+              style: const TextStyle(
+                  fontFamily: "poppins",
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      },
+    );
+  }
   _onTapChat(
       {required String recieverId,
       required String recieverUserName,

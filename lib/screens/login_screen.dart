@@ -13,6 +13,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lottie/lottie.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:unicons/unicons.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -227,6 +228,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(
                             height: 50,
                           ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              authenticationMethodWidget(
+                                onPressed: () {},
+                                icon: Icons.mail,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              authenticationMethodWidget(
+                                onPressed: _onTapGoogleSignIn,
+                                icon: UniconsLine.google,
+                              )
+                            ],
+                          ),
+                          const SizedBox(
+                            height: 11,
+                          ),
                           CustomButton(
                               width: double.infinity,
                               onPressed: () {
@@ -278,6 +298,55 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  _onTapGoogleSignIn() async {
+    GoogleAuthProvider googleAuthProvider = GoogleAuthProvider();
+    var token = await FirebaseMessaging.instance.getToken();
+    try {
+      await _auth.signInWithProvider(googleAuthProvider).then((value) {
+        var user = UserModel(
+            bio: "",
+            profileImage: value.user!.photoURL ??
+                "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg",
+            token: token!,
+            username: value.user!.displayName ?? "changeUsername",
+            uid: value.user!.uid,
+            email: value.user!.email!);
+
+        _firestore.collection("users").doc(user.uid).set(
+              user.toMap(),
+              SetOptions(merge: true),
+            );
+        EasyLoading.showToast("Loggined Successfully",
+            toastPosition: EasyLoadingToastPosition.bottom);
+        _setUserPref(token);
+        _navigateToHomePage();
+      });
+    } catch (e) {
+      EasyLoading.showToast(
+        e.toString(),
+        toastPosition: EasyLoadingToastPosition.bottom,
+      );
+    }
+  }
+
+  _setUserPref(String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString("username", _usernameController.text.toString());
+
+    prefs.setString("token", token);
+  }
+
+  Widget authenticationMethodWidget(
+      {required VoidCallback onPressed, required IconData icon}) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+        child: Icon(icon),
       ),
     );
   }

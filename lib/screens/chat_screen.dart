@@ -13,6 +13,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -310,8 +311,36 @@ final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
               const SizedBox(
                 width: 11,
               ),
-              GestureDetector(
-                onTap: _customModalBottomSheet,
+              SpeedDial(
+                animatedIcon: isImageLoading ? null : AnimatedIcons.menu_close,
+                animatedIconTheme: IconThemeData(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                overlayColor: Colors.black,
+                overlayOpacity: 0.4,
+                children: [
+                  SpeedDialChild(
+                    onTap: _customModalBottomSheet,
+                    shape: const CircleBorder(),
+                    // labelWidget: Container(
+                    //   decoration: BoxDecoration(
+                    //     color: Theme.of(context).colorScheme.background,
+                    //     borderRadius: BorderRadius.circular(10),
+                    //   ),
+                    //   padding: const EdgeInsets.all(5),
+                    //   child: Text(
+                    //     "Image",
+                    //     style: TextStyle(
+                    //         color: Theme.of(context).colorScheme.onBackground),
+                    //   ),
+                    // ),
+                    child: const Icon(
+                      Icons.image,
+                    ),
+                  )
+                ],
                 child: isImageLoading
                     ? const SizedBox(
                         height: 20,

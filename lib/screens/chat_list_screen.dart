@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -16,12 +17,21 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
+
+
+  bool isImageLoading = false;
   void _signOutUser() async {
     // var authService = context.read<AuthService>();
 
+
+    
     // authService.signOut();
     try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
       await _auth.signOut().then((value) {
+        prefs.clear();  
+
         Navigator.pushReplacement(
             context,
             MaterialPageRoute(

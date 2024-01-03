@@ -1,7 +1,9 @@
 import 'package:chat_app/screens/login_screen.dart';
 import 'package:chat_app/screens/sign_up_screen.dart';
 import 'package:chat_app/widgets/custom_button.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'dart:developer' as console show log;
 
 class GettingStartedScreen extends StatefulWidget {
   const GettingStartedScreen({super.key});
@@ -11,6 +13,15 @@ class GettingStartedScreen extends StatefulWidget {
 }
 
 class _GettingStartedScreenState extends State<GettingStartedScreen> {
+ 
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(

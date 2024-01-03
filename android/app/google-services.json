@@ -12,7 +12,20 @@
           "package_name": "com.example.modern_chat_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "896337234287-l5th5looaadg3degc14taq8qu86hfjob.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.modern_chat_app",
+            "certificate_hash": "1f7f65e5ee1d4c1bea1dc2661198bec1a6b36364"
+          }
+        },
+        {
+          "client_id": "896337234287-lm7jvft1lh261upmoba5t24mdjqkqu29.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB8BO_SRX1tG64VsXR13kWT0_Cex-ljOY8"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "896337234287-lm7jvft1lh261upmoba5t24mdjqkqu29.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "896337234287-kjsj2j5ohoubli7e9cf1ive391d52hrp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.modernChatApp.RunnerTests"
+              }
+            }
+          ]
         }
       }
     }

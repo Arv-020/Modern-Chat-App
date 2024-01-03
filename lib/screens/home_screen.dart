@@ -5,6 +5,7 @@ import 'package:chat_app/controllers/user_data_provider.dart';
 import 'package:chat_app/models/user_model.dart';
 import 'package:chat_app/models/user_status_model.dart';
 import 'package:chat_app/screens/chat_screen.dart';
+import 'package:chat_app/screens/profile_screen.dart';
 import 'package:chat_app/screens/status_screen.dart';
 import 'package:chat_app/services/status_services/status_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -33,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     getUserDetails();
   }
+  bool isStatusUploading = false;
 
   String imageUrl = "";
   bool isLoading = false;
@@ -98,27 +100,38 @@ class _HomeScreenState extends State<HomeScreen> {
                                     backgroundColor: Colors.grey,
                                     radius: 25,
                                   )
-                                : CachedNetworkImage(
-                                    imageUrl: user!.profileImage,
-                                    placeholder: (context, url) {
-                                      return Shimmer(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            Colors.grey,
-                                            Colors.grey.shade100
-                                          ],
+                                : GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const ProfileScreen(),
                                         ),
-                                        child: const CircleAvatar(
+                                      );
+                                    },
+                                    child: CachedNetworkImage(
+                                      imageUrl: user!.profileImage,
+                                      placeholder: (context, url) {
+                                        return Shimmer(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.grey,
+                                              Colors.grey.shade100
+                                            ],
+                                          ),
+                                          child: const CircleAvatar(
+                                            radius: 25,
+                                          ),
+                                        );
+                                      },
+                                      imageBuilder: (context, imageProvider) {
+                                        return CircleAvatar(
                                           radius: 25,
-                                        ),
-                                      );
-                                    },
-                                    imageBuilder: (context, imageProvider) {
-                                      return CircleAvatar(
-                                        radius: 25,
-                                        backgroundImage: imageProvider,
-                                      );
-                                    },
+                                          backgroundImage: imageProvider,
+                                        );
+                                      },
+                                    ),
                                   )
                           ],
                         ),
@@ -127,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 20),
                         child: SizedBox(
-                          height: 80,
+                          height: 100,
                           child: StreamBuilder<QuerySnapshot>(
                               stream: _firebaseFirestore
                                   .collection("status")
@@ -156,13 +169,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Expanded(
               flex: 2,
-
               child: Container(
-
                 decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.background,
                     // color: Colors.red,
-
+              
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(40))),
                 child: Column(
@@ -179,6 +190,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ));
   }
+
+  
 
 
   Widget _statusListWidget(List statusList) {
@@ -199,7 +212,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            StatusScreen(imageUrl: statusData!.statusImage)));
+                            StatusScreen(
+                              statusData: statusData!,
+                              tag: statusData.uid,
+                            )));
               } else {
                 _customModalBottomSheet();
               }
@@ -207,8 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: index == statusList.length
                 ? Container(
                     margin: EdgeInsets.only(left: statusList.isEmpty ? 30 : 20),
-                    child: Stack(
-                      alignment: Alignment.center,
+                    child: Column(
                       children: [
                         CachedNetworkImage(
                           imageUrl: user == null
@@ -243,10 +258,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           imageBuilder: (context, imageProvider) {
                             return Container(
+                              padding: const EdgeInsets.all(15),
                               height: 80,
                               width: 80,
                               decoration: BoxDecoration(
-                                image: DecorationImage(image: imageProvider),
+                                image: DecorationImage(
+                                    fit: BoxFit.cover, image: imageProvider),
                                 color: Colors.grey,
                                 borderRadius: BorderRadius.circular(40),
                                 border: Border.all(
@@ -257,65 +274,116 @@ class _HomeScreenState extends State<HomeScreen> {
                                       .withOpacity(0.5),
                                 ),
                               ),
+                              child: CircleAvatar(
+                                child: isStatusUploading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 1,
+                                        ),
+                                      )
+                                    : const Icon(Icons.add),
+                              ),
                             );
                           },
                         ),
-                        const Align(
-                          alignment: Alignment.center,
-                          child: CircleAvatar(
-                            child: Icon(Icons.add),
+                        const Text(
+                          "You",
+                          style: TextStyle(
+                            fontFamily: "poppins",
+                            color: Colors.white,
                           ),
                         )
                       ],
                     ),
                   )
-                : CachedNetworkImage(
-                    imageUrl: statusData!.statusImage,
-                    placeholder: (context, url) {
-                      return Container(
-                        margin: EdgeInsets.only(left: index == 0 ? 30 : 20),
-                        height: 80,
-                        width: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.grey,
-                          borderRadius: BorderRadius.circular(40),
-                          border: Border.all(
-                            width: 5,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimary
-                                .withOpacity(0.5),
+                : Hero(
+                    tag: statusData!.uid,
+                    child: Container(
+                      margin: EdgeInsets.only(left: index == 0 ? 30 : 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl: statusData.statusImage,
+                            placeholder: (context, url) {
+                              return Shimmer(
+                                gradient: LinearGradient(colors: [
+                                  Colors.grey,
+                                  Colors.grey.shade100,
+                                ]),
+                                child: Container(
+                                  height: 80,
+                                  width: 80,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey,
+                                    borderRadius: BorderRadius.circular(40),
+                                    border: Border.all(
+                                      width: 5,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary
+                                          .withOpacity(0.5),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            imageBuilder: (context, imageProvider) {
+                              return Container(
+                                height: 80,
+                                width: 80,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                      fit: BoxFit.cover, image: imageProvider),
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(40),
+                                  border: Border.all(
+                                    width: 5,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimary
+                                        .withOpacity(0.5),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      );
-                    },
-                    imageBuilder: (context, imageProvider) {
-                      return Container(
-                        margin: EdgeInsets.only(left: index == 0 ? 30 : 20),
-                        height: 80,
-                        width: 80,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                              fit: BoxFit.cover, image: imageProvider),
-                          color: Colors.grey,
-                          borderRadius: BorderRadius.circular(40),
-                          border: Border.all(
-                            width: 5,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimary
-                                .withOpacity(0.5),
-                          ),
-                        ),
-                      );
-                    },
+                          Text(
+                            statusData.userName,
+                            style: const TextStyle(
+                              fontFamily: "poppins",
+                              color: Colors.white,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
                   ),
           );
         });
   }
 
   void _addStatus(UserStatusModel userStatus) async {
-    await context.read<StatusService>().addStatus(userStatus);
+
+try {
+      await context.read<StatusService>().addStatus(userStatus).then((value) {
+        EasyLoading.showToast("Status Uploaded Successfully!",
+            toastPosition: EasyLoadingToastPosition.bottom);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString(),
+          ),
+        ),
+      );
+    }
+
   }
 
   Widget userListWidget() {
@@ -410,6 +478,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!mounted) return;
     Navigator.pop(context);
+    isStatusUploading = true;
+    setState(() {});
 
     Reference firebaseStorage = FirebaseStorage.instance.ref();
     Reference firebaseImageDir = firebaseStorage.child("Images");
@@ -422,12 +492,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
       _addStatus(
         UserStatusModel(
-            statusTime: Timestamp.now(),
+            statusTime: DateTime.now().toString(),
             uid: _auth.currentUser!.uid,
             statusImage: imageUrl,
             userName: user!.username),
       );
-      setState(() {});
+      setState(() {
+        isStatusUploading = false;
+      });
     } catch (error) {
       EasyLoading.showToast("$error",
           toastPosition: EasyLoadingToastPosition.bottom);
@@ -459,7 +531,7 @@ class _HomeScreenState extends State<HomeScreen> {
     var profileUrl = user.profileImage.isEmpty
         ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
         : user.profileImage;
-    if (_auth.currentUser!.email != user.email) {
+    if (_auth.currentUser!.uid != user.uid) {
       return ListTile(
         onTap: () {
           _onTapChat(

@@ -1,10 +1,12 @@
+
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserStatusModel {
   final String statusImage;
   final String userName;
   final String uid;
-  final Timestamp statusTime;
+  final String statusTime;
 
   UserStatusModel(
       {required this.statusTime,

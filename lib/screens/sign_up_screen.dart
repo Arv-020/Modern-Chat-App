@@ -16,7 +16,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
+import 'package:pinput/pinput.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:unicons/unicons.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -29,11 +32,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
   late TextEditingController _usernameController;
+  late TextEditingController _phoneController;
   bool isPasswordVisible = true;
   bool isRememberMe = false;
+  bool isImageLoading = false;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  CrossFadeState _state = CrossFadeState.showFirst;
+  CrossFadeState _continueState = CrossFadeState.showFirst;
+  CrossFadeState _signUpMethodState = CrossFadeState.showFirst;
+  CrossFadeState _otpMethodState = CrossFadeState.showFirst;
+
+
   @override
   void initState() {
     // TODO: implement initState
@@ -41,6 +50,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _usernameController = TextEditingController();
+    _phoneController = TextEditingController();
   }
 
   @override
@@ -49,13 +59,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _phoneController.dispose();
   }
-
+  String otp = "";
   String imageUrl = "";
-  bool isImageLoading = false;
-
+  double mHeight = 0;
+  double mWidth = 0;
   @override
   Widget build(BuildContext context) {
+
+    var mH = MediaQuery.sizeOf(context).height;
+    var mW = MediaQuery.sizeOf(context).width;
+    mHeight = mH;
+    mWidth = mW;
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.8),
       body: Center(
@@ -120,7 +137,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         firstCurve: Curves.easeIn,
                         secondCurve: Curves.easeOut,
                         duration: const Duration(milliseconds: 500),
-                        crossFadeState: _state,
+                        crossFadeState: _continueState,
                         firstChild: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -140,10 +157,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         alignment: Alignment.bottomRight,
                                         children: [
                                           imageUrl.isEmpty
-                                              ? const CircleAvatar(
+                                              ? CircleAvatar(
                                                   radius: 50,
-                                                  backgroundImage: AssetImage(
+                                                  backgroundImage: const AssetImage(
                                                       "assets/images/default-profile-image.jpeg"),
+                                                  child: isImageLoading
+                                                      ? const CircularProgressIndicator()
+                                                      : const SizedBox(),
                                                 )
                                               : CachedNetworkImage(
                                                   imageBuilder:
@@ -156,16 +176,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                                   },
                                                   imageUrl: imageUrl,
                                                   placeholder: (context, url) {
-                                                    return CircleAvatar(
-                                                      radius: 50,
-                                                      backgroundColor: Colors
-                                                          .grey
-                                                          .withOpacity(0.4),
-                                                      child: const SizedBox(
-                                                        height: 20,
-                                                        width: 20,
-                                                        child:
-                                                            CircularProgressIndicator(),
+                                                    return Shimmer(
+                                                      gradient: LinearGradient(
+                                                          colors: [
+                                                            Colors.grey,
+                                                            Colors
+                                                                .grey.shade100,
+                                                          ]),
+                                                      child: CircleAvatar(
+                                                        radius: 50,
+                                                        backgroundColor: Colors
+                                                            .grey
+                                                            .withOpacity(0.4),
+                                                        child: const SizedBox(
+                                                          height: 20,
+                                                          width: 20,
+                                                          child:
+                                                              CircularProgressIndicator(),
+                                                        ),
                                                       ),
                                                     );
                                                   },
@@ -212,8 +240,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(
-                              height: 50,
+                            SizedBox(
+                              height: mH * .05,
                             ),
                             CustomButton(
                                 width: double.infinity,
@@ -275,152 +303,185 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             )
                           ],
                         ),
-                        secondChild: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(
-                              height: 20,
-                            ),
-                            SizedBox(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Enter Email",
-                                    style: TextStyle(
-                                        fontFamily: "poppins",
-                                        fontWeight: FontWeight.w500,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onBackground),
-                                  ),
-                                  const SizedBox(
-                                    height: 8,
-                                  ),
-                                  CustomTextField(
-                                    isPrefixVisible: true,
-                                    maxLines: 1,
-                                    isEnabled: true,
-                                    onSufficIconPressed: () {},
-                                    obscureText: false,
-                                    keyboardType: TextInputType.emailAddress,
-                                    controller: _emailController,
-                                    prefixIcon: Icons.mail,
-                                    suffixIcon: Icons.arrow_right,
-                                    hintText: "Enter Your Email",
-                                    isSuffixIconVisible: false,
-                                  ),
-                                  const SizedBox(
-                                    height: 20,
-                                  ),
-                                  Text(
-                                    "Enter Password",
-                                    style: TextStyle(
-                                        fontFamily: "poppins",
-                                        fontWeight: FontWeight.w500,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onBackground),
-                                  ),
-                                  const SizedBox(
-                                    height: 8,
-                                  ),
-                                  CustomTextField(
+                        secondChild: AnimatedCrossFade(
+                          sizeCurve: Curves.linear,
+                          firstCurve: Curves.easeIn,
+                          secondCurve: Curves.easeOut,
+                          duration: const Duration(milliseconds: 500),
+                          crossFadeState: _signUpMethodState,
+                          firstChild: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                height: 20,
+                              ),
+                              SizedBox(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Enter Email",
+                                      style: TextStyle(
+                                          fontFamily: "poppins",
+                                          fontWeight: FontWeight.w500,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onBackground),
+                                    ),
+                                    const SizedBox(
+                                      height: 8,
+                                    ),
+                                    CustomTextField(
                                       isPrefixVisible: true,
                                       maxLines: 1,
                                       isEnabled: true,
-                                      onSufficIconPressed: () {
-                                        setState(() {
-                                          isPasswordVisible =
-                                              !isPasswordVisible;
-                                        });
-                                      },
-                                      obscureText: isPasswordVisible,
-                                      controller: _passwordController,
-                                      keyboardType:
-                                          TextInputType.visiblePassword,
-                                      prefixIcon: Icons.lock,
-                                      suffixIcon: isPasswordVisible
-                                          ? Icons.visibility
-                                          : Icons.visibility_off,
-                                      hintText: "Enter Your Password",
-                                      isSuffixIconVisible: true),
+                                      onSufficIconPressed: () {},
+                                      obscureText: false,
+                                      keyboardType: TextInputType.emailAddress,
+                                      controller: _emailController,
+                                      prefixIcon: Icons.mail,
+                                      suffixIcon: Icons.arrow_right,
+                                      hintText: "Enter Your Email",
+                                      isSuffixIconVisible: false,
+                                    ),
+                                    const SizedBox(
+                                      height: 20,
+                                    ),
+                                    Text(
+                                      "Enter Password",
+                                      style: TextStyle(
+                                          fontFamily: "poppins",
+                                          fontWeight: FontWeight.w500,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onBackground),
+                                    ),
+                                    const SizedBox(
+                                      height: 8,
+                                    ),
+                                    CustomTextField(
+                                        isPrefixVisible: true,
+                                        maxLines: 1,
+                                        isEnabled: true,
+                                        onSufficIconPressed: () {
+                                          setState(() {
+                                            isPasswordVisible =
+                                                !isPasswordVisible;
+                                          });
+                                        },
+                                        obscureText: isPasswordVisible,
+                                        controller: _passwordController,
+                                        keyboardType:
+                                            TextInputType.visiblePassword,
+                                        prefixIcon: Icons.lock,
+                                        suffixIcon: isPasswordVisible
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
+                                        hintText: "Enter Your Password",
+                                        isSuffixIconVisible: true),
+                                    const SizedBox(
+                                      height: 11,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                height: mH * .05,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  authenticationMethodWidget(
+                                    onPressed: () {
+                                      _signUpMethodState =
+                                          CrossFadeState.showSecond;
+                                      setState(() {});
+                                    },
+                                    icon: UniconsLine.phone,
+                                  ),
                                   const SizedBox(
-                                    height: 11,
+                                    width: 10,
+                                  ),
+                                  authenticationMethodWidget(
+                                    onPressed: _onTapGoogleSignIn,
+                                    icon: UniconsLine.google,
+                                  )
+                                ],
+                              ),
+                              const SizedBox(
+                                height: 11,
+                              ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                      child: CustomButton(
+                                          width: double.infinity,
+                                          onPressed: _onTapCrossfadeChange,
+                                          btnTitle: "Back",
+                                          bgColor: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.8),
+                                          fgColor: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary,
+                                          height: 50)),
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  Expanded(
+                                    child: CustomButton(
+                                        width: double.infinity,
+                                        onPressed: () {
+                                          _onTapSignUp();
+                                        },
+                                        btnTitle: "Sign Up",
+                                        bgColor: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        fgColor: Colors.white,
+                                        height: 50),
                                   ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(
-                              height: 50,
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: CustomButton(
-                                        width: double.infinity,
-                                        onPressed: _onTapCrossfadeChange,
-                                        btnTitle: "Back",
-                                        bgColor: Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withOpacity(0.8),
-                                        fgColor: Theme.of(context)
-                                            .colorScheme
-                                            .onPrimary,
-                                        height: 50)),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                Expanded(
-                                  child: CustomButton(
-                                      width: double.infinity,
-                                      onPressed: () {
-                                        _onTapSignUp();
-                                      },
-                                      btnTitle: "Sign Up",
-                                      bgColor:
-                                          Theme.of(context).colorScheme.primary,
-                                      fgColor: Colors.white,
-                                      height: 50),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(
-                              height: 20,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Already have an account?",
-                                  style: TextStyle(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onBackground,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                GestureDetector(
-                                  onTap: _onTapLogin,
-                                  child: Text(
-                                    "Login",
+                              const SizedBox(
+                                height: 20,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Already have an account?",
                                     style: TextStyle(
-                                      fontFamily: "poppins",
-                                      fontWeight: FontWeight.w600,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                      decoration: TextDecoration.underline,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onBackground,
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   ),
-                                )
-                              ],
-                            )
-                          ],
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  GestureDetector(
+                                    onTap: _onTapLogin,
+                                    child: Text(
+                                      "Login",
+                                      style: TextStyle(
+                                        fontFamily: "poppins",
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              )
+                            ],
+                          ),
+                          secondChild: phoneAuthenticationWidget(),
                         ),
                       ),
                     ),
@@ -434,7 +495,325 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
+  Widget authenticationMethodWidget(
+      {required VoidCallback onPressed, required IconData icon}) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+        child: Icon(icon),
+      ),
+    );
+  }
+
+  Widget phoneAuthenticationWidget() {
+    return AnimatedCrossFade(
+        sizeCurve: Curves.linear,
+        firstCurve: Curves.easeIn,
+        secondCurve: Curves.easeOut,
+        duration: const Duration(milliseconds: 500),
+        crossFadeState: _otpMethodState,
+        firstChild: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  Text(
+                    "Enter Phone Number",
+                    style: TextStyle(
+                        fontFamily: "poppins",
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onBackground),
+                  ),
+                  const SizedBox(
+                    height: 8,
+                  ),
+                  CustomTextField(
+                    isPrefixVisible: true,
+                    maxLines: 1,
+                    isEnabled: true,
+                    onSufficIconPressed: () {},
+                    obscureText: false,
+                    keyboardType: TextInputType.phone,
+                    controller: _phoneController,
+                    prefixIcon: Icons.mail,
+                    suffixIcon: Icons.arrow_right,
+                    hintText: "Enter Your Phone Number",
+                    isSuffixIconVisible: false,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: mHeight * .02,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                authenticationMethodWidget(
+                  onPressed: () {
+                    _signUpMethodState = CrossFadeState.showFirst;
+                    setState(() {});
+                  },
+                  icon: Icons.mail,
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                authenticationMethodWidget(
+                  onPressed: _onTapGoogleSignIn,
+                  icon: UniconsLine.google,
+                )
+              ],
+            ),
+            const SizedBox(
+              height: 11,
+            ),
+            Row(
+              children: [
+                Expanded(
+                    child: CustomButton(
+                        width: double.infinity,
+                        onPressed: () {
+                          _signUpMethodState = CrossFadeState.showFirst;
+                          setState(() {});
+                        },
+                        btnTitle: "Back",
+                        bgColor: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.8),
+                        fgColor: Theme.of(context).colorScheme.onPrimary,
+                        height: 50)),
+                const SizedBox(
+                  width: 5,
+                ),
+                Expanded(
+                  child: CustomButton(
+                      width: double.infinity,
+                      onPressed: () {
+                        var phoneNumber =
+                            _phoneController.text.trim().toString();
+                        if (phoneNumber.isNotEmpty) {
+                          if (phoneNumber.length == 10) {
+                            //otp work
+                            _otpMethodState = CrossFadeState.showSecond;
+                            setState(() {});
+                          } else {
+                            EasyLoading.showToast(
+                              "Length must be 10 digits longer",
+                              toastPosition: EasyLoadingToastPosition.bottom,
+                            );
+                          }
+                        } else {
+                          EasyLoading.showToast(
+                            "Please Enter the Phone Number",
+                            toastPosition: EasyLoadingToastPosition.bottom,
+                          );
+                        }
+                      },
+                      btnTitle: "Continue",
+                      bgColor: Theme.of(context).colorScheme.primary,
+                      fgColor: Colors.white,
+                      height: 50),
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Already have an account?",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onBackground,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(
+                  width: 5,
+                ),
+                GestureDetector(
+                  onTap: _onTapLogin,
+                  child: Text(
+                    "Login",
+                    style: TextStyle(
+                      fontFamily: "poppins",
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                )
+              ],
+            )
+          ],
+        ),
+        secondChild: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  Text(
+                    "Enter Otp",
+                    style: TextStyle(
+                        fontFamily: "poppins",
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onBackground),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  Pinput(
+                    length: 6,
+                    onChanged: (value) {
+                      otp = value;
+                      // console.log(otp);
+                    },
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: mHeight * .05,
+            ),
+            Row(
+              children: [
+                Expanded(
+                    child: CustomButton(
+                        width: double.infinity,
+                        onPressed: () {
+                          _otpMethodState = CrossFadeState.showFirst;
+                          setState(() {});
+                        },
+                        btnTitle: "Back",
+                        bgColor: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.8),
+                        fgColor: Theme.of(context).colorScheme.onPrimary,
+                        height: 50)),
+                const SizedBox(
+                  width: 5,
+                ),
+                Expanded(
+                  child: CustomButton(
+                      width: double.infinity,
+                      onPressed: () {
+                        var phoneNumber =
+                            _phoneController.text.trim().toString();
+                        if (otp.isNotEmpty) {
+                          if (otp.length == 6) {
+                            console.log("hahahahaha");
+                          } else {
+                            EasyLoading.showToast(
+                              "Length must be 6 digits longer",
+                              toastPosition: EasyLoadingToastPosition.bottom,
+                            );
+                          }
+                        } else {
+                          EasyLoading.showToast(
+                            "Please Enter the Otp",
+                            toastPosition: EasyLoadingToastPosition.bottom,
+                          );
+                        }
+                      },
+                      btnTitle: "Sign Up",
+                      bgColor: Theme.of(context).colorScheme.primary,
+                      fgColor: Colors.white,
+                      height: 50),
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Already have an account?",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onBackground,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(
+                  width: 5,
+                ),
+                GestureDetector(
+                  onTap: _onTapLogin,
+                  child: Text(
+                    "Login",
+                    style: TextStyle(
+                      fontFamily: "poppins",
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                )
+              ],
+            )
+          ],
+        ));
+  }
+
+  _onTapGoogleSignIn() async {
+    GoogleAuthProvider googleAuthProvider = GoogleAuthProvider();
+    var token = await FirebaseMessaging.instance.getToken();
+    try {
+      await _auth.signInWithProvider(googleAuthProvider).then((value) {
+        var user = UserModel(
+            bio: "",
+            profileImage: imageUrl,
+            token: token!,
+            username: _usernameController.text.trim().toString(),
+            uid: value.user!.uid,
+            email: value.user!.email!);
+
+        _firestore.collection("users").doc(user.uid).set(
+              user.toMap(),
+              SetOptions(merge: true),
+            );
+        EasyLoading.showToast("Account Created SuccessFully",
+            toastPosition: EasyLoadingToastPosition.bottom);
+        _setUserPref(token);
+        _navigateToHomePage();
+      });
+    } catch (e) {
+      EasyLoading.showToast(
+        e.toString(),
+        toastPosition: EasyLoadingToastPosition.bottom,
+      );
+    }
+  }
+
+  _generateOtp() {}
+
   _onTapProfile() {
+
+
     _customModalBottomSheet();
   }
 
@@ -471,6 +850,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         borderRadius: const BorderRadius.only(
                             bottomRight: Radius.circular(10)),
                         onPressed: () {
+                          isImageLoading = true;
+                          setState(() {});
                           _pickAndUploadImage(ImageSource.camera);
                         }),
                     const SizedBox(
@@ -481,6 +862,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         borderRadius: const BorderRadius.only(
                             bottomLeft: Radius.circular(10)),
                         onPressed: () {
+                          isImageLoading = true;
+                          setState(() {});
                           _pickAndUploadImage(ImageSource.gallery);
                         }),
                   ],
@@ -499,8 +882,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (!mounted) return;
     Navigator.pop(context);
-    isImageLoading = true;
-    setState(() {});
+    
+     
     Reference firebaseStorage = FirebaseStorage.instance.ref();
     Reference firebaseImageDir = firebaseStorage.child("Images");
     Reference firebaseImageName = firebaseImageDir.child(file.name);
@@ -512,12 +895,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
       setState(() {
         isImageLoading = false;
       });
+     
 
       console.log(imageUrl);
     } catch (error) {
-      setState(() {
-        isImageLoading = false;
-      });
+     
       EasyLoading.showToast("$error",
           toastPosition: EasyLoadingToastPosition.bottom);
     }
@@ -545,10 +927,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   _onTapCrossfadeChange() {
     setState(() {
-      if (_state == CrossFadeState.showFirst) {
-        _state = CrossFadeState.showSecond;
+      if (_continueState == CrossFadeState.showFirst) {
+        _continueState = CrossFadeState.showSecond;
       } else {
-        _state = CrossFadeState.showFirst;
+        _continueState = CrossFadeState.showFirst;
       }
     });
   }
@@ -575,7 +957,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               token: token!,
               uid: value.user!.uid,
               email: value.user!.email!,
-              username: _usernameController.text.toString());
+              username: _usernameController.text.trim.toString());
           _firestore
               .collection('users')
               .doc(user.uid)

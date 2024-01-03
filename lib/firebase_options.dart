@@ -63,6 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '896337234287',
     projectId: 'modern-chat-app-cc6e7',
     storageBucket: 'modern-chat-app-cc6e7.appspot.com',
+    androidClientId: '896337234287-l5th5looaadg3degc14taq8qu86hfjob.apps.googleusercontent.com',
+    iosClientId: '896337234287-lqca3cjsijlbj5gkquv0ron7th99na10.apps.googleusercontent.com',
     iosBundleId: 'com.example.modernChatApp',
   );
 }

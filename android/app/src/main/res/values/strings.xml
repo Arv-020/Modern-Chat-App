@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="facebook_app_id">2155082238179899</string>
-    <string name="fb_login_protocol_scheme">fb2155082238179899</string>
-    <string name="facebook_client_token">71aad387b7aa245be4cecf8a8d30d6d6</string>
+    <string name="facebook_app_id">216923501489339</string>
+    <string name="fb_login_protocol_scheme">fb216923501489339</string>
+    <string name="facebook_client_token">0c03b5553ae4a65f157788233073ba46</string>
     <string name="app_name">"Modern-Chat-App"</string>
 
 </resources>

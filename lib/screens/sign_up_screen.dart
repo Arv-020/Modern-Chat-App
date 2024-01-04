@@ -5,6 +5,7 @@ import 'package:chat_app/models/user_model.dart';
 import 'dart:developer' as console show log;
 import 'package:chat_app/screens/login_screen.dart';
 import 'package:chat_app/screens/navigation_bar_screen.dart';
+import 'package:chat_app/services/auth/otp_service.dart';
 import 'package:chat_app/utils/constants/app_constants.dart';
 import 'package:chat_app/widgets/custom_button.dart';
 import 'package:chat_app/widgets/custom_textfield.dart';
@@ -19,6 +20,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pinput/pinput.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:unicons/unicons.dart';
@@ -67,9 +69,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String imageUrl = "";
   double mHeight = 0;
   double mWidth = 0;
+  
   @override
   Widget build(BuildContext context) {
-
+    
     var mH = MediaQuery.sizeOf(context).height;
     var mW = MediaQuery.sizeOf(context).width;
     mHeight = mH;
@@ -247,18 +250,42 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             CustomButton(
                                 width: double.infinity,
-                                onPressed: () {
+                                onPressed: () async {
+
+                                  
                                   var username = _usernameController.text
                                       .trim()
                                       .toString();
                                   if (username.length > 5) {
-                                    if (username.isNotEmpty) {
-                                      _onTapCrossfadeChange();
+
+                                    if (imageUrl.isEmpty) {
+                                      EasyLoading.showToast(
+                                        "Please select profile pic",
+                                        toastPosition:
+                                            EasyLoadingToastPosition.bottom,
+                                      );
                                     } else {
-                                      EasyLoading.showToast("Enter Username",
+                                      await isUserNameExist(username)
+                                          .then((value) {
+                                        if (value) {
+                                          EasyLoading.showToast(
+                                            "Username Already Exist",
+                                            toastPosition:
+                                                EasyLoadingToastPosition.bottom,
+                                          );
+                                        } else {
+                                          _onTapCrossfadeChange();
+                                        }
+                                      }).catchError((error) {
+                                        EasyLoading.showToast(
+                                          error.toString(),
                                           toastPosition:
-                                              EasyLoadingToastPosition.bottom);
-                                    }
+                                              EasyLoadingToastPosition.bottom,
+                                        );
+                                      });
+                                    }  
+
+
                                   } else {
                                     EasyLoading.showToast(
                                         "Length must be greater than 5 characters",
@@ -442,9 +469,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   Expanded(
                                     child: CustomButton(
                                         width: double.infinity,
-                                        onPressed: () {
-                                          _onTapSignUp();
-                                        },
+                                        onPressed: _onTapSignUp,
                                         btnTitle: "Sign Up",
                                         bgColor: Theme.of(context)
                                             .colorScheme
@@ -503,7 +528,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
+ 
 
+  Future<bool> isUserNameExist(String username) async {
+    final querysnapshot = await _firestore
+        .collection("users")
+        .where("username", isEqualTo: username)
+        .get();
+
+    return querysnapshot.docs.isNotEmpty;
+  }
   _onTapFaceBookSignIn() async {
     // trigger the flow
     LoginResult loginResult = await FacebookAuth.instance.login();
@@ -533,6 +567,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _navigateToHomePage();
       });
     } catch (e) {
+      console.log(e.toString());
       EasyLoading.showToast(
         e.toString(),
         toastPosition: EasyLoadingToastPosition.bottom,
@@ -645,14 +680,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Expanded(
                   child: CustomButton(
                       width: double.infinity,
-                      onPressed: () {
+                      onPressed: () async {
                         var phoneNumber =
                             _phoneController.text.trim().toString();
                         if (phoneNumber.isNotEmpty) {
                           if (phoneNumber.length == 10) {
                             //otp work
+                            showLoader();
+                            try {
+                              await context
+                                  .read<OtpService>()
+                                  .generateOtp(phoneNumber: "+91$phoneNumber")
+                                  .then((value) {
                             _otpMethodState = CrossFadeState.showSecond;
+                            
+                                showToast("otp sent SuccessFully");
                             setState(() {});
+
+                              });
+                            } catch (e) {
+                              showToast(
+                                e.toString(),
+                              );
+                            }
+ 
                           } else {
                             EasyLoading.showToast(
                               "Length must be 10 digits longer",
@@ -765,11 +816,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: CustomButton(
                       width: double.infinity,
                       onPressed: () {
-                        var phoneNumber =
-                            _phoneController.text.trim().toString();
+                       
                         if (otp.isNotEmpty) {
                           if (otp.length == 6) {
-                            console.log("hahahahaha");
+                            _onTapPhoneSignUp();
                           } else {
                             EasyLoading.showToast(
                               "Length must be 6 digits longer",
@@ -783,7 +833,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           );
                         }
                       },
-                      btnTitle: "Sign Up",
+                      btnTitle: "Verify",
                       bgColor: Theme.of(context).colorScheme.primary,
                       fgColor: Colors.white,
                       height: 50),
@@ -822,6 +872,48 @@ class _SignUpScreenState extends State<SignUpScreen> {
             )
           ],
         ));
+  }
+
+  _onTapPhoneSignUp() async {
+    var token = await FirebaseMessaging.instance.getToken();
+    showLoader();
+    if (!mounted) return;
+
+    try {
+      await context
+          .read<OtpService>()
+          .authenticateUser(otp: otp, verficationId: gVerficationId)
+          .then((value) async {
+        var userExist =
+            await context.read<OtpService>().isUserExist(uid: value.user!.uid);
+
+        if (userExist) {
+          EasyLoading.showToast("User Exist Kindly Login");
+        } else {
+          var user = UserModel(
+            bio: "",
+            profileImage: imageUrl,
+            token: token!,
+            username: _usernameController.text.toString(),
+            uid: value.user!.uid,
+            email: _phoneController.text.toString(),
+          );
+
+          _firestore.collection("users").doc(value.user!.uid).set(
+                user.toMap(),
+                SetOptions(merge: true),
+              );
+
+          _setUserPref(token);
+          _navigateToHomePage();
+        }
+      });
+    } catch (e) {
+      EasyLoading.showToast(
+        e.toString(),
+        toastPosition: EasyLoadingToastPosition.bottom,
+      );
+    }
   }
 
   _onTapGoogleSignIn() async {
@@ -1033,6 +1125,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
       EasyLoading.showToast("Please Enter The Details",
           toastPosition: EasyLoadingToastPosition.bottom);
     }
+  }
+
+  showToast(String toastTitle) {
+    EasyLoading.showToast(
+      toastTitle,
+      toastPosition: EasyLoadingToastPosition.bottom,
+    );
+  }
+
+  showLoader() {
+    EasyLoading.show(
+      status: "Loading...",
+    );
   }
 
   _navigateToHomePage() {

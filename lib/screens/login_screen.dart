@@ -316,7 +316,7 @@ class _LoginScreenState extends State<LoginScreen> {
     LoginResult loginResult = await FacebookAuth.instance.login();
     // obtain the user
     OAuthCredential credential =
-        FacebookAuthProvider.credential(loginResult.accessToken.toString());
+        FacebookAuthProvider.credential(loginResult.accessToken!.token);
 
     var token = await FirebaseMessaging.instance.getToken();
     try {

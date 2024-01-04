@@ -1,6 +1,7 @@
 import 'package:chat_app/controllers/user_data_provider.dart';
 import 'package:chat_app/screens/splash_screen.dart';
 import 'package:chat_app/services/auth/auth_service.dart';
+import 'package:chat_app/services/auth/otp_service.dart';
 import 'package:chat_app/services/chat_services/chat_service.dart';
 import 'package:chat_app/services/notification_services/notification_service.dart';
 import 'package:chat_app/services/status_services/status_services.dart';
@@ -27,7 +28,8 @@ void main() async {
       ),
       ChangeNotifierProvider(create: (context) => ChatService()),
       ChangeNotifierProvider(create: (context) => UserDataProvider()),
-      ChangeNotifierProvider(create: (context) => StatusService())
+      ChangeNotifierProvider(create: (context) => StatusService()),
+      ChangeNotifierProvider(create: (context) => OtpService())
     ],
     child: const MyApp(),
   ));

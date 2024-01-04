@@ -53,6 +53,8 @@ dependencies:
   jiffy: ^6.2.2
   pinput: ^3.0.1
   flutter_speed_dial: ^7.0.0
+  google_sign_in: ^6.2.1
+  flutter_facebook_auth: ^6.0.3
 
 dev_dependencies:
   flutter_test:

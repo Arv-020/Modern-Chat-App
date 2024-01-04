@@ -10,6 +10,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lottie/lottie.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -233,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               authenticationMethodWidget(
                                 onPressed: () {},
-                                icon: Icons.mail,
+                                icon: Icons.phone,
                               ),
                               const SizedBox(
                                 width: 10,
@@ -241,6 +243,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               authenticationMethodWidget(
                                 onPressed: _onTapGoogleSignIn,
                                 icon: UniconsLine.google,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              authenticationMethodWidget(
+                                onPressed: _onTapFaceBookSignIn,
+                                icon: UniconsLine.facebook,
                               )
                             ],
                           ),
@@ -302,27 +311,64 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  _onTapGoogleSignIn() async {
-    GoogleAuthProvider googleAuthProvider = GoogleAuthProvider();
+  _onTapFaceBookSignIn() async {
+    // trigger the flow
+    LoginResult loginResult = await FacebookAuth.instance.login();
+    // obtain the user
+    OAuthCredential credential =
+        FacebookAuthProvider.credential(loginResult.accessToken.toString());
+
     var token = await FirebaseMessaging.instance.getToken();
     try {
-      await _auth.signInWithProvider(googleAuthProvider).then((value) {
-        var user = UserModel(
-            bio: "",
-            profileImage: value.user!.photoURL ??
-                "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg",
-            token: token!,
-            username: value.user!.displayName ?? "changeUsername",
-            uid: value.user!.uid,
-            email: value.user!.email!);
+      await _auth.signInWithCredential(credential).then((value) async {
+        var userData =
+            await _firestore.collection("users").doc(value.user!.uid).get();
+
+        var user = UserModel.fromMap(userData.data() as Map<String, dynamic>);
 
         _firestore.collection("users").doc(user.uid).set(
               user.toMap(),
               SetOptions(merge: true),
             );
-        EasyLoading.showToast("Loggined Successfully",
+        EasyLoading.showToast("Loggined SuccessFully",
             toastPosition: EasyLoadingToastPosition.bottom);
-        _setUserPref(token);
+        _setUserPref(token!);
+        _navigateToHomePage();
+      });
+    } catch (e) {
+      EasyLoading.showToast(
+        e.toString(),
+        toastPosition: EasyLoadingToastPosition.bottom,
+      );
+    }
+  }
+
+  _onTapGoogleSignIn() async {
+    //  trigger the flow
+    GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+    //obtain the user
+    GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+
+    final userCredential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken, idToken: googleAuth?.idToken);
+
+    var token = await FirebaseMessaging.instance.getToken();
+
+    try {
+      await _auth.signInWithCredential(userCredential).then((value) async {
+        var userData =
+            await _firestore.collection("users").doc(value.user!.uid).get();
+
+        var user = UserModel.fromMap(userData.data() as Map<String, dynamic>);
+
+        _firestore.collection("users").doc(user.uid).set(
+              user.toMap(),
+              SetOptions(merge: true),
+            );
+        EasyLoading.showToast("Loggined SuccessFully",
+            toastPosition: EasyLoadingToastPosition.bottom);
+        _setUserPref(token!);
         _navigateToHomePage();
       });
     } catch (e) {
@@ -355,27 +401,19 @@ class _LoginScreenState extends State<LoginScreen> {
     var email = _emailController.text.trim().toString();
     var password = _passwordController.text.trim().toString();
 
-   
-  
-
     if (email.isNotEmpty && password.isNotEmpty) {
       // var authService = context.read<AuthService>();
       EasyLoading.show(status: "Loading...");
       try {
         await _auth
             .signInWithEmailAndPassword(email: email, password: password)
-            .then((value) async{
-         
+            .then((value) async {
           var token = await FirebaseMessaging.instance.getToken();
-          
-         
-         
+
           _firestore
               .collection("users")
               .doc(value.user!.uid)
-              .update({"token": token}
-             
-              );
+              .update({"token": token});
           EasyLoading.showToast("Logged-In SuccessFully",
               toastPosition: EasyLoadingToastPosition.bottom);
           _setUserPrefs(token!);
@@ -404,8 +442,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   _navigateToHomePage() {
-    Navigator.pushReplacement(
-        context,
+    Navigator.pushReplacement(context,
         MaterialPageRoute(builder: (context) => const NavigationBarScreen()));
   }
 

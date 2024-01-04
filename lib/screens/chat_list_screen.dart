@@ -6,6 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -28,9 +30,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
     // authService.signOut();
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-
+      await GoogleSignIn().signOut();
+      await FacebookAuth.instance.logOut();
       await _auth.signOut().then((value) {
         prefs.clear();  
+
 
         Navigator.pushReplacement(
             context,

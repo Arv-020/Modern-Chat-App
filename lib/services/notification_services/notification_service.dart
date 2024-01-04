@@ -25,7 +25,11 @@ class NotificationService {
   static Future initPushNotification() async {
     await FirebaseMessaging.instance
         .setForegroundNotificationPresentationOptions(
-            alert: true, badge: true, sound: true);
+
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
     await FirebaseMessaging.instance.getInitialMessage().then(handleMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);

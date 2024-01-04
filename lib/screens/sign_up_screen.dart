@@ -14,6 +14,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pinput/pinput.dart';
@@ -406,7 +408,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   authenticationMethodWidget(
                                     onPressed: _onTapGoogleSignIn,
                                     icon: UniconsLine.google,
-                                  )
+                                  ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  authenticationMethodWidget(
+                                    onPressed: _onTapFaceBookSignIn,
+                                    icon: UniconsLine.facebook,
+                                  ),
                                 ],
                               ),
                               const SizedBox(
@@ -493,6 +502,42 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       ),
     );
+  }
+
+  _onTapFaceBookSignIn() async {
+    // trigger the flow
+    LoginResult loginResult = await FacebookAuth.instance.login();
+    // obtain the user
+    OAuthCredential credential =
+        FacebookAuthProvider.credential(loginResult.accessToken!.token);
+
+    var token = await FirebaseMessaging.instance.getToken();
+    try {
+      await _auth.signInWithCredential(credential).then((value) async {
+        var user = UserModel(
+          bio: "",
+          profileImage: imageUrl,
+          token: token!,
+          username: _usernameController.text.toString(),
+          uid: value.user!.uid,
+          email: value.user!.email ?? "",
+        );
+
+        _firestore.collection("users").doc(user.uid).set(
+              user.toMap(),
+              SetOptions(merge: true),
+            );
+        EasyLoading.showToast("Account Created SuccessFully",
+            toastPosition: EasyLoadingToastPosition.bottom);
+        _setUserPref(token);
+        _navigateToHomePage();
+      });
+    } catch (e) {
+      EasyLoading.showToast(
+        e.toString(),
+        toastPosition: EasyLoadingToastPosition.bottom,
+      );
+    }
   }
 
   Widget authenticationMethodWidget(
@@ -780,10 +825,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   _onTapGoogleSignIn() async {
-    GoogleAuthProvider googleAuthProvider = GoogleAuthProvider();
+ 
+    //  trigger the flow
+    GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+    //obtain the user
+    GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+
+    final userCredential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken, idToken: googleAuth?.idToken);
+    
+    
     var token = await FirebaseMessaging.instance.getToken();
     try {
-      await _auth.signInWithProvider(googleAuthProvider).then((value) {
+      await _auth.signInWithCredential(userCredential).then((value) {
         var user = UserModel(
             bio: "",
             profileImage: imageUrl,

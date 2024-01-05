@@ -6,6 +6,7 @@ import 'dart:developer' as console show log;
 import 'package:chat_app/screens/login_screen.dart';
 import 'package:chat_app/screens/navigation_bar_screen.dart';
 import 'package:chat_app/services/auth/otp_service.dart';
+import 'package:chat_app/ui_helper/ui_helper.dart';
 import 'package:chat_app/utils/constants/app_constants.dart';
 import 'package:chat_app/widgets/custom_button.dart';
 import 'package:chat_app/widgets/custom_textfield.dart';
@@ -15,6 +16,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
@@ -259,38 +261,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   if (username.length > 5) {
 
                                     if (imageUrl.isEmpty) {
-                                      EasyLoading.showToast(
-                                        "Please select profile pic",
-                                        toastPosition:
-                                            EasyLoadingToastPosition.bottom,
-                                      );
+                                      UiHelper.showToast(
+                                          "Please select profile pic");
                                     } else {
+                                      UiHelper.showLoader();
                                       await isUserNameExist(username)
                                           .then((value) {
                                         if (value) {
-                                          EasyLoading.showToast(
-                                            "Username Already Exist",
-                                            toastPosition:
-                                                EasyLoadingToastPosition.bottom,
-                                          );
+                                          UiHelper.showToast(
+                                              "Username Already Exist");
                                         } else {
+                                          EasyLoading.dismiss();
+
                                           _onTapCrossfadeChange();
                                         }
                                       }).catchError((error) {
-                                        EasyLoading.showToast(
-                                          error.toString(),
-                                          toastPosition:
-                                              EasyLoadingToastPosition.bottom,
-                                        );
+                                        UiHelper.showToast(error.toString());
                                       });
                                     }  
 
 
                                   } else {
-                                    EasyLoading.showToast(
-                                        "Length must be greater than 5 characters",
-                                        toastPosition:
-                                            EasyLoadingToastPosition.bottom);
+                                    UiHelper.showToast(
+                                        "Length must be greater than 5 characters");
                                   }
                                 },
                                 btnTitle: "Continue",
@@ -530,6 +523,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
  
 
+  Future<bool> isUserAlreadyExist(String uid) async {
+    final querySnapshot =
+        await _firestore.collection("users").where("uid", isEqualTo: uid).get();
+
+    return querySnapshot.docs.isNotEmpty;
+  } 
+
   Future<bool> isUserNameExist(String username) async {
     final querysnapshot = await _firestore
         .collection("users")
@@ -546,9 +546,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
         FacebookAuthProvider.credential(loginResult.accessToken!.token);
 
     var token = await FirebaseMessaging.instance.getToken();
+
+    UiHelper.showLoader();
+
+
     try {
       await _auth.signInWithCredential(credential).then((value) async {
-        var user = UserModel(
+        final isUserExist = await isUserAlreadyExist(value.user!.uid);
+        UserModel user;
+        if (isUserExist) {
+          var userSnapshot =
+              await _firestore.collection("users").doc(value.user!.uid).get();
+
+          user = UserModel.fromMap(userSnapshot.data() as Map<String, dynamic>);
+        } else {
+          user = UserModel(
           bio: "",
           profileImage: imageUrl,
           token: token!,
@@ -556,22 +568,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
           uid: value.user!.uid,
           email: value.user!.email ?? "",
         );
+        }
 
         _firestore.collection("users").doc(user.uid).set(
               user.toMap(),
               SetOptions(merge: true),
             );
-        EasyLoading.showToast("Account Created SuccessFully",
-            toastPosition: EasyLoadingToastPosition.bottom);
-        _setUserPref(token);
+        UiHelper.showToast("Account Created SuccessFully");
+        _setUserPref(token!);
         _navigateToHomePage();
       });
     } catch (e) {
       console.log(e.toString());
-      EasyLoading.showToast(
-        e.toString(),
-        toastPosition: EasyLoadingToastPosition.bottom,
-      );
+      UiHelper.showToast(e.toString());
     }
   }
 
@@ -686,7 +695,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         if (phoneNumber.isNotEmpty) {
                           if (phoneNumber.length == 10) {
                             //otp work
-                            showLoader();
+                            UiHelper.showLoader();
                             try {
                               await context
                                   .read<OtpService>()
@@ -694,27 +703,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   .then((value) {
                             _otpMethodState = CrossFadeState.showSecond;
                             
-                                showToast("otp sent SuccessFully");
+                                UiHelper.showToast("otp sent SuccessFully");
                             setState(() {});
 
                               });
                             } catch (e) {
-                              showToast(
+                              UiHelper.showToast(
                                 e.toString(),
                               );
                             }
  
                           } else {
-                            EasyLoading.showToast(
-                              "Length must be 10 digits longer",
-                              toastPosition: EasyLoadingToastPosition.bottom,
-                            );
+                            UiHelper.showToast(
+                                "Length must be 10 digits longer");
                           }
                         } else {
-                          EasyLoading.showToast(
-                            "Please Enter the Phone Number",
-                            toastPosition: EasyLoadingToastPosition.bottom,
-                          );
+                          UiHelper.showToast("Please Enter the Phone Number");
                         }
                       },
                       btnTitle: "Continue",
@@ -821,16 +825,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           if (otp.length == 6) {
                             _onTapPhoneSignUp();
                           } else {
-                            EasyLoading.showToast(
-                              "Length must be 6 digits longer",
-                              toastPosition: EasyLoadingToastPosition.bottom,
-                            );
+                            UiHelper.showToast(
+                                "Length must be 6 digits longer");
                           }
                         } else {
-                          EasyLoading.showToast(
-                            "Please Enter the Otp",
-                            toastPosition: EasyLoadingToastPosition.bottom,
-                          );
+                          UiHelper.showToast("Please Enter The Otp");
                         }
                       },
                       btnTitle: "Verify",
@@ -876,7 +875,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   _onTapPhoneSignUp() async {
     var token = await FirebaseMessaging.instance.getToken();
-    showLoader();
+    UiHelper.showLoader();
     if (!mounted) return;
 
     try {
@@ -888,7 +887,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             await context.read<OtpService>().isUserExist(uid: value.user!.uid);
 
         if (userExist) {
-          EasyLoading.showToast("User Exist Kindly Login");
+          UiHelper.showToast("User Exist");
         } else {
           var user = UserModel(
             bio: "",
@@ -909,10 +908,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
       });
     } catch (e) {
-      EasyLoading.showToast(
-        e.toString(),
-        toastPosition: EasyLoadingToastPosition.bottom,
-      );
+      UiHelper.showToast(e.toString());
     }
   }
 
@@ -929,30 +925,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
     
     
     var token = await FirebaseMessaging.instance.getToken();
+
+    UiHelper.showLoader();
     try {
-      await _auth.signInWithCredential(userCredential).then((value) {
-        var user = UserModel(
+      await _auth.signInWithCredential(userCredential).then((value) async {
+        final isUserExist = await isUserAlreadyExist(value.user!.uid);
+        UserModel user;
+        if (isUserExist) {
+          final userSnapshot =
+              await _firestore.collection("users").doc(value.user!.uid).get();
+          user = UserModel.fromMap(userSnapshot.data() as Map<String, dynamic>);
+        } else {
+          user = UserModel(
             bio: "",
             profileImage: imageUrl,
             token: token!,
             username: _usernameController.text.trim().toString(),
             uid: value.user!.uid,
             email: value.user!.email!);
+        }
+
+
 
         _firestore.collection("users").doc(user.uid).set(
               user.toMap(),
               SetOptions(merge: true),
             );
-        EasyLoading.showToast("Account Created SuccessFully",
-            toastPosition: EasyLoadingToastPosition.bottom);
-        _setUserPref(token);
+        UiHelper.showToast("Account Created Successfully");
+        _setUserPref(token!);
         _navigateToHomePage();
       });
     } catch (e) {
-      EasyLoading.showToast(
-        e.toString(),
-        toastPosition: EasyLoadingToastPosition.bottom,
-      );
+      UiHelper.showToast(e.toString());
     }
   }
 
@@ -1047,8 +1051,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       console.log(imageUrl);
     } catch (error) {
      
-      EasyLoading.showToast("$error",
-          toastPosition: EasyLoadingToastPosition.bottom);
+      UiHelper.showToast(error.toString());
     }
   }
 
@@ -1087,7 +1090,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     var password = _passwordController.text.trim().toString();
 
     if (email.isNotEmpty && password.isNotEmpty) {
-      EasyLoading.show(status: "Loading...");
+      UiHelper.showLoader();
       // var authService = Provider.of<AuthService>(context, listen: false);
       try {
         await _auth
@@ -1110,35 +1113,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
               .doc(user.uid)
               .set(user.toMap(), SetOptions(merge: true));
 
-          EasyLoading.showToast("Account Created SuccessFully",
-              toastPosition: EasyLoadingToastPosition.bottom);
+          UiHelper.showToast("Account Created Successfully");
           _setUserPref(token);
           _navigateToHomePage();
         });
       } catch (e) {
-        EasyLoading.showToast(
-          e.toString(),
-          toastPosition: EasyLoadingToastPosition.bottom,
-        );
+        UiHelper.showToast(e.toString());
       }
     } else {
-      EasyLoading.showToast("Please Enter The Details",
-          toastPosition: EasyLoadingToastPosition.bottom);
+      UiHelper.showToast("Please Enter the Details");
     }
   }
 
-  showToast(String toastTitle) {
-    EasyLoading.showToast(
-      toastTitle,
-      toastPosition: EasyLoadingToastPosition.bottom,
-    );
-  }
+  
 
-  showLoader() {
-    EasyLoading.show(
-      status: "Loading...",
-    );
-  }
+  
 
   _navigateToHomePage() {
     Navigator.pushReplacement(context,

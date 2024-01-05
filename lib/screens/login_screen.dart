@@ -311,6 +311,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Future<bool> isUserAlreadyExist(String uid) async {
+    final querySnapshot =
+        await _firestore.collection("users").where("uid", isEqualTo: uid).get();
+
+    return querySnapshot.docs.isNotEmpty;
+  } 
+
   _onTapFaceBookSignIn() async {
     // trigger the flow
     LoginResult loginResult = await FacebookAuth.instance.login();
@@ -321,10 +328,26 @@ class _LoginScreenState extends State<LoginScreen> {
     var token = await FirebaseMessaging.instance.getToken();
     try {
       await _auth.signInWithCredential(credential).then((value) async {
-        var userData =
+        final isUserExist = await isUserAlreadyExist(value.user!.uid);
+        UserModel user;
+        if (isUserExist) {
+          final userSnapshot =
             await _firestore.collection("users").doc(value.user!.uid).get();
 
-        var user = UserModel.fromMap(userData.data() as Map<String, dynamic>);
+          user = UserModel.fromMap(userSnapshot.data() as Map<String, dynamic>);
+        } else {
+          user = UserModel(
+            bio: "",
+            profileImage: value.user!.photoURL ??
+                "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg",
+            token: token!,
+            username: value.user!.displayName!,
+            uid: value.user!.uid,
+            email: value.user!.email ?? "",
+          );
+        }
+
+
 
         _firestore.collection("users").doc(user.uid).set(
               user.toMap(),

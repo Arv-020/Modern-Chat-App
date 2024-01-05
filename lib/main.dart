@@ -6,6 +6,7 @@ import 'package:chat_app/services/chat_services/chat_service.dart';
 import 'package:chat_app/services/notification_services/notification_service.dart';
 import 'package:chat_app/services/status_services/status_services.dart';
 import 'package:chat_app/utils/themes/themes.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -20,11 +21,14 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug,
+  );
   await NotificationService.initNotifications();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(
-        create: (context) => AuthService(),
+        create: (context) => AuthService()
       ),
       ChangeNotifierProvider(create: (context) => ChatService()),
       ChangeNotifierProvider(create: (context) => UserDataProvider()),

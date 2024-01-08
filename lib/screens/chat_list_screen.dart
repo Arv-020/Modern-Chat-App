@@ -2,12 +2,15 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_app/models/user_model.dart';
 import 'package:chat_app/screens/chat_screen.dart';
 import 'package:chat_app/screens/getting_started_screen.dart';
+import 'package:chat_app/services/chat_services/chat_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:jiffy/jiffy.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -110,10 +113,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Widget listUserItem(DocumentSnapshot document) {
     var user = UserModel.fromMap(document.data() as Map<String, dynamic>);
+
+   
+
+   
     var profileUrl = user.profileImage.isEmpty
         ? "https://cdn.vectorstock.com/i/preview-1x/17/61/male-avatar-profile-picture-vector-10211761.jpg"
         : user.profileImage;
-    if (_auth.currentUser!.email != user.email) {
+    if (_auth.currentUser!.uid != user.uid) {
       return ListTile(
         onTap: () {
           _onTapChat(
@@ -154,26 +161,51 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
         ),
         contentPadding: const EdgeInsets.all(10),
-        subtitle: Text(
-          "demo text messages",
-          style: TextStyle(
-              fontFamily: "poppins",
-              color: Theme.of(context).colorScheme.onBackground),
+        subtitle: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: context.read<ChatService>().getLastMessage(user.uid),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                var list = snapshot.data!.docs;
+
+                return list.isEmpty
+                    ? const SizedBox()
+                    : Text(
+                        list.last.data()["message"],
+                        style: TextStyle(
+                            fontFamily: "poppins",
+                            color: Theme.of(context).colorScheme.onBackground),
+                      );
+              } else {
+                return const SizedBox();
+              }
+            }
         ),
-        trailing: const Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Text("1:30pm"),
-            CircleAvatar(
-              radius: 8,
-              backgroundColor: Colors.red,
-              child: Center(
-                  child: Text(
-                "1",
-                style: TextStyle(fontSize: 10),
-              )),
-            )
-          ],
+        trailing: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: context.read<ChatService>().getLastMessage(user.uid),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                var list = snapshot.data!.docs;
+                return list.isEmpty
+                    ? const SizedBox()
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Text(Jiffy.parse(list.last.data()["timeStamp"])
+                              .format(pattern: "h:mm a")),
+                          CircleAvatar(
+                            radius: 8,
+                            backgroundColor: Colors.red,
+                            child: Center(
+                                child: Text(
+                              list.length.toString(),
+                              style: const TextStyle(fontSize: 10),
+                            )),
+                          ),
+                        ],
+                      );
+              }
+              return const SizedBox();
+            }
         ),
         title: Text(user.username),
       );

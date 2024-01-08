@@ -5,11 +5,13 @@ class ChatMessageModel {
   final String senderEmail;
   final String recieverId;
   final String message;
-  final Timestamp timeStamp;
+  final String timeStamp;
   final int fileType;
+  final int isSeen;
 
   ChatMessageModel( 
       {required this.message,
+      required this.isSeen,
       required this.fileType,
       required this.recieverId,
       required this.senderId,
@@ -18,6 +20,7 @@ class ChatMessageModel {
 
   factory ChatMessageModel.fromMap(Map<String,dynamic> data){
     return ChatMessageModel(
+        isSeen: data["isSeen"],
         fileType: data["fileType"],
         message: data["message"],
         recieverId: data["recieverId"],
@@ -29,6 +32,7 @@ class ChatMessageModel {
 
   Map<String, dynamic> toMap() {
     return {
+      "isSeen": isSeen,
       "fileType": fileType,
       "senderId": senderId,
       "senderEmail": senderEmail,

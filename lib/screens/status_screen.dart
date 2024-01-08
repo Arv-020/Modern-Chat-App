@@ -8,7 +8,7 @@ import 'dart:developer' as console show log;
 class StatusScreen extends StatefulWidget {
   const StatusScreen({super.key, required this.statusData, required this.tag});
   final UserStatusModel statusData;
-  final String tag;
+  final UniqueKey tag;
 
   @override
   State<StatusScreen> createState() => _StatusScreenState();
@@ -66,12 +66,12 @@ class _StatusScreenState extends State<StatusScreen>
           });
          
         },
-        child: Hero(
-          tag: widget.tag,
-          child: Stack(
-            alignment: Alignment.topLeft,
-            children: [
-              CachedNetworkImage(
+        child: Stack(
+          alignment: Alignment.topLeft,
+          children: [
+            Hero(
+              tag: widget.tag,
+              child: CachedNetworkImage(
                 imageUrl: widget.statusData.statusImage,
                 progressIndicatorBuilder: (context, url, progress) {
                   return Container(
@@ -99,49 +99,49 @@ class _StatusScreenState extends State<StatusScreen>
                   );
                 },
               ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        height: 5,
+            ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    Text(
+                      widget.statusData.userName,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontFamily: "poppins",
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
                       ),
-                      Text(
-                        widget.statusData.userName,
-                        style: const TextStyle(
-                          fontSize: 20,
+                    ),
+                    // const SizedBox(
+                    //   height: 5,
+                    // ),
+                    Text(
+                      Jiffy.parse(widget.statusData.statusTime)
+                          .format(pattern: "dd MMM yyyy"),
+                      style: const TextStyle(
                           fontFamily: "poppins",
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                      // const SizedBox(
-                      //   height: 5,
-                      // ),
-                      Text(
-                        Jiffy.parse(widget.statusData.statusTime)
-                            .format(pattern: "dd MMM yyyy"),
-                        style: const TextStyle(
-                            fontFamily: "poppins",
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white),
-                      ),
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      LinearProgressIndicator(
-                        value: value,
-                        backgroundColor: Colors.grey.withOpacity(0.4),
-                      )
-                    ],
-                  ),
+                          color: Colors.white),
+                    ),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    LinearProgressIndicator(
+                      value: value,
+                      backgroundColor: Colors.grey.withOpacity(0.4),
+                    )
+                  ],
                 ),
-              )
-            ],
-          ),
+              ),
+            )
+          ],
         ),
       ),
     );

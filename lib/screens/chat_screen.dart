@@ -1,4 +1,3 @@
-
 import 'dart:developer' as console show log;
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -19,33 +18,62 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ChatScreen extends StatefulWidget {
-   const ChatScreen({super.key, required this.recieverId, required this.recieverUserName, required this.token});
-final String recieverId;
-final String token;
-final String recieverUserName;
+  const ChatScreen(
+      {super.key,
+      required this.recieverId,
+      required this.recieverUserName,
+      required this.token});
+  final String recieverId;
+  final String token;
+  final String recieverUserName;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-final FirebaseAuth _auth = FirebaseAuth.instance;
-late TextEditingController _messageController ;
-final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  late TextEditingController _messageController;
+  final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
 
-
-@override
+  @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _messageController = TextEditingController();
-    
-
+    msgsSeen();
   }
+
+  void msgsSeen() async {
+    String senderId = _auth.currentUser!.uid;
+    String chatRoomId = context
+        .read<ChatService>()
+        .getChatRoomId(recieverId: widget.recieverId, senderId: senderId);
+    final querySnapShot = await _firebaseFirestore
+        .collection("chat_room")
+        .doc(chatRoomId)
+        .collection("messages")
+        .where("recieverId", isEqualTo: senderId)
+        .get();
+
+    for (final doc in querySnapShot.docs) {
+      await _firebaseFirestore
+          .collection("chat_room")
+          .doc(chatRoomId)
+          .collection("messages")
+          .doc(doc.id)
+          .update({"isSeen": 1});
+
+}
+isAlreadyUpdated = true;
+  }
+
+  bool isAlreadyUpdated = false;
+ 
   String imageUrl = "";
   bool isImageSelected = false;
   bool isImageLoading = false;
-  
+
   @override
   void dispose() {
     // TODO: implement dispose
@@ -53,120 +81,124 @@ final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
 
     _messageController.dispose();
   }
+
+  @override
+  void deactivate() {
+    // TODO: implement deactivate
+    if (!isAlreadyUpdated) {
+      msgsSeen();
+    }
+    super.deactivate();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        
         backgroundColor: Theme.of(context).colorScheme.primary,
-        leading:  GestureDetector(
-          onTap: (){
+        leading: GestureDetector(
+          onTap: () {
             Navigator.pop(context);
           },
-          child: Icon(Icons.arrow_back_ios,
-          color: Theme.of(context).colorScheme.onPrimary,
+          child: Icon(
+            Icons.arrow_back_ios,
+            color: Theme.of(context).colorScheme.onPrimary,
           ),
         ),
-        title: Text(widget.recieverUserName,
-        style: TextStyle(
-          fontFamily: "poppins",
-          color: Theme.of(context).colorScheme.onPrimary,
-        ),),
-
-      
+        title: Text(
+          widget.recieverUserName,
+          style: TextStyle(
+            fontFamily: "poppins",
+            color: Theme.of(context).colorScheme.onPrimary,
+          ),
+        ),
       ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
-          image: DecorationImage(
-            fit: BoxFit.cover
-            ,image: AssetImage("assets/images/chat-bg-img.jpeg"))
-        ),
+            image: DecorationImage(
+                fit: BoxFit.cover,
+                image: AssetImage("assets/images/chat-bg-img.jpeg"))),
         child: chatScreenBody(context),
       ),
-     
     );
   }
 
-  Widget chatScreenBody(BuildContext context){
+  Widget chatScreenBody(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Expanded(
-          
-          child: chatMessageWidget(context)),
-           chatInputWidget()
+        Expanded(child: chatMessageWidget(context)),
+        chatInputWidget()
       ],
     );
   }
 
- Widget chatMessageWidget(BuildContext context){
-   var chatService = context.read<ChatService>().getMessages(widget.recieverId);
-    
-   return StreamBuilder<QuerySnapshot>(stream:chatService, builder: (context, snapshot) {
-     if(snapshot.connectionState == ConnectionState.waiting){
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+  Widget chatMessageWidget(BuildContext context) {
+    var chatService =
+        context.read<ChatService>().getMessages(widget.recieverId);
 
-      
-     }
+    return StreamBuilder<QuerySnapshot>(
+      stream: chatService,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
 
-     if(snapshot.hasData){
-      return ListView(
-        reverse: true,
-        physics: const BouncingScrollPhysics(),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-         
-        dragStartBehavior: DragStartBehavior.down,
-        shrinkWrap: true,
-        
-        // shrinkWrap: true,
-        // reverse: trueSS,
-      
-        children: snapshot.data!.docs.map((doc) => GestureDetector(
-          onTap:(){
-            console.log(doc["senderId"]);
-            console.log(doc["recieverId"]);
-            console.log(_auth.currentUser!.uid);
-            if(doc["senderId"]==_auth.currentUser!.uid){
+        if (snapshot.hasData) {
+          return ListView(
+              reverse: true,
+              physics: const BouncingScrollPhysics(),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              dragStartBehavior: DragStartBehavior.down,
+              shrinkWrap: true,
+
+              // shrinkWrap: true,
+              // reverse: trueSS,
+
+              children: snapshot.data!.docs
+                  .map((doc) => GestureDetector(
+                      onTap: () {
+                        console.log(doc["senderId"]);
+                        console.log(doc["recieverId"]);
+                        console.log(_auth.currentUser!.uid);
+                        if (doc["senderId"] == _auth.currentUser!.uid) {
                           context
                               .read<ChatService>()
                               .deleteMessage(_auth.currentUser!.uid);
-            }
-          },
-          child: chatMessageItemWidget(doc))).toList()
-      );
-     }
+                        }
+                      },
+                      child: chatMessageItemWidget(doc)))
+                  .toList());
+        }
 
-     return const SizedBox();
-   },);
+        return const SizedBox();
+      },
+    );
+  }
 
- }
-
- Widget chatMessageItemWidget(DocumentSnapshot document){
-   var chatMessage =  ChatMessageModel.fromMap(document.data() as Map<String,dynamic>);
-  bool isSendedByMe = chatMessage.senderId == _auth.currentUser!.uid;
+  Widget chatMessageItemWidget(DocumentSnapshot document) {
+    var chatMessage =
+        ChatMessageModel.fromMap(document.data() as Map<String, dynamic>);
+    bool isSendedByMe = chatMessage.senderId == _auth.currentUser!.uid;
 
     bool isImage = chatMessage.fileType == 0;
-   return Container(
-    
-    alignment: isSendedByMe? Alignment.bottomRight : Alignment.bottomLeft  ,
-    margin: const EdgeInsets.only(bottom: 11,top: 11),
-    
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        
-        Container(
-     
-          decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary,
+    return Container(
+      alignment: isSendedByMe ? Alignment.bottomRight : Alignment.bottomLeft,
+      margin: const EdgeInsets.only(bottom: 11, top: 11),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            width: MediaQuery.sizeOf(context).width * .5,
+            decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.horizontal(
                     left: Radius.circular(isSendedByMe ? 20 : 0),
-                    right: Radius.circular(isSendedByMe ? 0 : 20))
-          ),
+                    right: Radius.circular(isSendedByMe ? 0 : 20))),
             padding: EdgeInsets.fromLTRB(
               isImage ? 0 : 30,
               isImage ? 0 : 11,
@@ -199,8 +231,7 @@ final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
                           borderRadius: const BorderRadius.horizontal(
                             left: Radius.circular(20),
                           ),
-                            image: DecorationImage(
-                            
+                          image: DecorationImage(
                               fit: BoxFit.cover, image: imageProvider),
                         ),
                       );
@@ -208,29 +239,24 @@ final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
                   )
                 : Text(
                     chatMessage.message,
-          
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
-            fontSize: 16,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontSize: 16,
                     ),
                   ),
           )
         ],
-    ),
-   );
+      ),
+    );
+  }
 
- }
-
- Widget chatInputWidget() {
-
-  return  Container(
-    decoration: BoxDecoration(
-    color: Theme.of(context).colorScheme.background,
-    borderRadius: BorderRadius.circular(26)
-
-    ),
-    padding: const EdgeInsets.all(5),
-    margin:const EdgeInsets.all(15),
+  Widget chatInputWidget() {
+    return Container(
+      decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.background,
+          borderRadius: BorderRadius.circular(26)),
+      padding: const EdgeInsets.all(5),
+      margin: const EdgeInsets.all(15),
       child: Column(
         children: [
           isImageSelected
@@ -239,12 +265,10 @@ final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    
                   ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      
                       CachedNetworkImage(
                         imageUrl: imageUrl,
                         placeholder: (context, url) {
@@ -488,26 +512,25 @@ final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
       ),
     );
   }
- 
-  void _onTapSend() async {
 
- 
+  void _onTapSend() async {
     var message =
         isImageSelected ? imageUrl : _messageController.text.trim().toString();
     if (message.isNotEmpty) {
-    _messageController.clear();
-    FocusManager.instance.primaryFocus?.unfocus();
+      _messageController.clear();
+      FocusManager.instance.primaryFocus?.unfocus();
       context
           .read<ChatService>()
-          .sendMessage(widget.recieverId, message, isImageSelected ? 0 : 1)
+          .sendMessage(
+            widget.recieverId,
+            message,
+            isImageSelected ? 0 : 1,
+          )
           .then((value) async {
-
         if (isImageSelected) {
           isImageSelected = false;
           setState(() {});
         }
-
-
 
         console.log(widget.recieverId);
         console.log(_auth.currentUser!.uid);
@@ -529,18 +552,11 @@ final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
                     token: widget.token),
                 notification: NotificationBody(body: message)));
 
-       
-    
-    if(notificationResult==0){
-      EasyLoading.showToast("Failed to send Notification",toastPosition: EasyLoadingToastPosition.bottom);
+        if (notificationResult == 0) {
+          EasyLoading.showToast("Failed to send Notification",
+              toastPosition: EasyLoadingToastPosition.bottom);
+        }
+      });
     }
-    });
-    
-
-
-     
-    }
-    
-
   }
 }

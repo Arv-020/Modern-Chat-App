@@ -960,7 +960,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  _generateOtp() {}
+ 
 
   _onTapProfile() {
 

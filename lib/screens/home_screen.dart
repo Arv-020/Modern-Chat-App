@@ -7,6 +7,7 @@ import 'package:chat_app/models/user_status_model.dart';
 import 'package:chat_app/screens/chat_screen.dart';
 import 'package:chat_app/screens/profile_screen.dart';
 import 'package:chat_app/screens/status_screen.dart';
+import 'package:chat_app/services/chat_services/chat_service.dart';
 import 'package:chat_app/services/status_services/status_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,6 +15,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:jiffy/jiffy.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:unicons/unicons.dart';
@@ -200,6 +202,9 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const BouncingScrollPhysics(),
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
+
+          final heroTag = UniqueKey();
+
           UserStatusModel? statusData;
           if (index != statusList.length) {
             statusData = UserStatusModel.fromMap(
@@ -214,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (context) =>
                             StatusScreen(
                               statusData: statusData!,
-                              tag: statusData.uid,
+                              tag: heroTag,
                             )));
               } else {
                 _customModalBottomSheet();
@@ -300,14 +305,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   )
                 : Hero(
-                    tag: statusData!.uid,
+                    tag: heroTag,
                     child: Container(
                       margin: EdgeInsets.only(left: index == 0 ? 30 : 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           CachedNetworkImage(
-                            imageUrl: statusData.statusImage,
+                            imageUrl: statusData!.statusImage,
                             placeholder: (context, url) {
                               return Shimmer(
                                 gradient: LinearGradient(colors: [
@@ -574,26 +579,50 @@ try {
           ),
         ),
         contentPadding: const EdgeInsets.all(10),
-        subtitle: Text(
-          "demo text messages",
-          style: TextStyle(
-              fontFamily: "poppins",
-              color: Theme.of(context).colorScheme.onBackground),
+        subtitle: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: context.read<ChatService>().getLastMessage(user.uid),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                var list = snapshot.data!.docs;
+                return list.isEmpty
+                    ? const SizedBox()
+                    : Text(
+                        list.last.data()["message"],
+                        style: TextStyle(
+                            fontFamily: "poppins",
+                            color: Theme.of(context).colorScheme.onBackground),
+                      );
+              }
+              return const SizedBox();
+            }
         ),
-        trailing: const Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Text("1:30pm"),
-            CircleAvatar(
-              radius: 8,
-              backgroundColor: Colors.red,
-              child: Center(
-                  child: Text(
-                "1",
-                style: TextStyle(fontSize: 10),
-              )),
-            )
-          ],
+        trailing: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: context.read<ChatService>().getLastMessage(user.uid),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                var list = snapshot.data!.docs;
+
+                return list.isEmpty
+                    ? const SizedBox()
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Text(Jiffy.parse(list.last.data()["timeStamp"])
+                              .format(pattern: "h:mm a")),
+                          CircleAvatar(
+                            radius: 8,
+                            backgroundColor: Colors.red,
+                            child: Center(
+                                child: Text(
+                              list.length.toString(),
+                              style: const TextStyle(fontSize: 10),
+                            )),
+                          )
+                        ],
+                      );
+              }
+              return const SizedBox();
+            }
         ),
         title: Text(user.username),
       );

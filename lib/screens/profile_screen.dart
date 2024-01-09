@@ -3,6 +3,7 @@ import 'dart:developer' as console show log;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_app/models/user_model.dart';
+import 'package:chat_app/ui_helper/ui_helper.dart';
 import 'package:chat_app/widgets/custom_textfield.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -130,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: GestureDetector(
 
                 onLongPress: () {
-                  _customImageDialog(profileUrl);
+                  UiHelper.customImageDialog(context, profileUrl);
                 },
                 onTap: isEditClicked ? _onTapProfileImage : () {},
                 child: Stack(
@@ -264,45 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  void _customImageDialog(String imageUrl) {
-    showDialog(
-      context: context,
-      // anchorPoint: const Offset(0, 10),
-      builder: (context) {
-        return Dialog(
-          child: SizedBox(
-            height: 400,
-            child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              placeholder: (context, url) {
-                return Shimmer(
-                    gradient: LinearGradient(
-                      colors: [Colors.grey, Colors.grey.shade100],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    child: const CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey,
-                    ));
-              },
-              imageBuilder: (context, imageProvider) {
-                return Container(
-                  height: 400,
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      image: DecorationImage(
-                        fit: BoxFit.cover,
-                        image: imageProvider,
-                      )),
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
+  
 
   void _onTapProfileImage() {
     showModalBottomSheet(

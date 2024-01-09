@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:chat_app/models/chat_message_model.dart';
 import 'package:chat_app/models/chat_model.dart';
+import 'package:chat_app/models/last_message.dart';
 import 'package:chat_app/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,7 +15,7 @@ import 'dart:developer' as console show log;
 class ChatService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+ 
 // send Message Function
   Future<void> sendMessage(
     String recieverId,
@@ -90,52 +91,56 @@ isSeen: 0,
     return chatRoomId;
   }
 
-  Stream<List<ChatModel>> getChats() async* {
-    final currentUser = _auth.currentUser!.uid;
-    final users = await _firestore.collection("users").get();
+  // Stream<List<ChatModel>> getChats() async* {
+  //   final currentUser = _auth.currentUser!.uid;
+  //   final users = await _firestore.collection("users").get();
 
-    List<ChatModel> chatList = [];
+  //   List<ChatModel> chatList = [];
 
-    for (final element in users.docs) {
-      var user = UserModel.fromMap(element.data());
+  //   for (final element in users.docs) {
+  //     var user = UserModel.fromMap(element.data());
 
-      if (user.uid != currentUser) {
-        final chatDetailSnapshot = await _firestore
-            .collection("chat_room")
-            .doc(getChatRoomId(
-                recieverId: user.uid, senderId: _auth.currentUser!.uid))
-            .collection("messages")
-            .where(
-              "recieverId",
-              isEqualTo: _auth.currentUser!.uid,
-            )
-            .where("isSeen", isEqualTo: 0)
-            .get();
-        Map chatDetails;
+  //     if (user.uid != currentUser) {
+  //       final chatDetailSnapshot = await _firestore
+  //           .collection("chat_room")
+  //           .doc(getChatRoomId(
+  //               recieverId: user.uid, senderId: _auth.currentUser!.uid))
+  //           .collection("messages")
+  //           .where(
+  //             "recieverId",
+  //             isEqualTo: _auth.currentUser!.uid,
+  //           )
+  //           .where("isSeen", isEqualTo: 0)
+  //           .get();
+  //       Map chatDetails;
 
-        if (chatDetailSnapshot.docs.isEmpty) {
-          chatDetails = {"message": "", "timeStamp": ""};
-        } else {
-          chatDetails = {
-            "message": chatDetailSnapshot.docs.last.data()["message"],
-            "timeStamp": chatDetailSnapshot.docs.last.data()["timeStamp"],
-          };
-        }
+  //       if (chatDetailSnapshot.docs.isEmpty) {
+  //         chatDetails = {"message": "", "timeStamp": ""};
+  //       } else {
+  //         chatDetails = {
+  //           "message": chatDetailSnapshot.docs.last.data()["message"],
+  //           "timeStamp": chatDetailSnapshot.docs.last.data()["timeStamp"],
+  //         };
+  //       }
 
-        chatList.add(ChatModel(
-            uid: user.uid,
-            lastMsg: chatDetails["message"],
-            profileImage: user.profileImage,
-            time: chatDetails["timeStamp"].toString(),
-            token: user.token,
-            unseenMsgCount: chatDetailSnapshot.docs.length,
-            username: user.username));
-      }
-    }
-    console.log(chatList.length.toString());
+  //       chatList.add(ChatModel(
+  //           uid: user.uid,
+  //           lastMsg: chatDetails["message"],
+  //           profileImage: user.profileImage,
+  //           time: chatDetails["timeStamp"].toString(),
+  //           token: user.token,
+  //           unseenMsgCount: chatDetailSnapshot.docs.length,
+  //           username: user.username));
+  //     }
+  //   }
+  //   console.log(chatList.length.toString());
 
-    yield chatList;
-  }
+  //   yield chatList;
+  // }
+
+
+
+  
 
   Stream<QuerySnapshot<Map<String, dynamic>>> getLastMessage(
       String recieverId) {
@@ -148,6 +153,29 @@ isSeen: 0,
         .where("isSeen", isEqualTo: 0)
         .snapshots();
   }
+
+
+  Future<String?> getLastMessageTimestamp(String recieverId) async {
+    var messageDetails = await _firestore
+        .collection("chat_room")
+        .doc(getChatRoomId(
+            recieverId: recieverId, senderId: _auth.currentUser!.uid))
+        .collection("messages")
+        .where("recieverId", isEqualTo: _auth.currentUser!.uid)
+        .where("isSeen", isEqualTo: 0)
+        .get();
+
+    if (messageDetails.docs.isEmpty) {
+      return null;
+    }
+
+    var lastMessageDetails =
+        ChatMessageModel.fromMap(messageDetails.docs.last.data());
+
+    return lastMessageDetails.timeStamp;
+  }
+
+  
 
  
 }

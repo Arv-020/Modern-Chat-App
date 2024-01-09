@@ -2,6 +2,7 @@ import 'package:chat_app/models/user_model.dart';
 import 'package:chat_app/screens/chat_list_screen.dart';
 import 'package:chat_app/screens/navigation_bar_screen.dart';
 import 'package:chat_app/screens/sign_up_screen.dart';
+import 'package:chat_app/ui_helper/ui_helper.dart';
 import 'package:chat_app/utils/constants/app_constants.dart';
 import 'package:chat_app/widgets/custom_button.dart';
 import 'package:chat_app/widgets/custom_textfield.dart';
@@ -326,6 +327,7 @@ class _LoginScreenState extends State<LoginScreen> {
         FacebookAuthProvider.credential(loginResult.accessToken!.token);
 
     var token = await FirebaseMessaging.instance.getToken();
+    UiHelper.showLoader();
     try {
       await _auth.signInWithCredential(credential).then((value) async {
         final isUserExist = await isUserAlreadyExist(value.user!.uid);
@@ -378,6 +380,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     var token = await FirebaseMessaging.instance.getToken();
 
+UiHelper.showLoader();
     try {
       await _auth.signInWithCredential(userCredential).then((value) async {
         var userData =

@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:developer' as console show log;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_app/controllers/user_data_provider.dart';
 import 'package:chat_app/models/user_model.dart';
@@ -7,8 +7,10 @@ import 'package:chat_app/models/user_status_model.dart';
 import 'package:chat_app/screens/chat_screen.dart';
 import 'package:chat_app/screens/profile_screen.dart';
 import 'package:chat_app/screens/status_screen.dart';
+
 import 'package:chat_app/services/chat_services/chat_service.dart';
 import 'package:chat_app/services/status_services/status_services.dart';
+import 'package:chat_app/ui_helper/ui_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -28,13 +30,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Stream<QuerySnapshot> snapshots;
+  
   UserModel? user;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getUserDetails();
+    deleteStatus();
   }
   bool isStatusUploading = false;
 
@@ -53,6 +56,22 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       isLoading = false;
     });
+  }
+
+
+  deleteStatus() async {
+    var now = DateTime.now();
+    var data = await _firebaseFirestore.collection("status").get();
+    for (final docData in data.docs) {
+      var statusDetails = UserStatusModel.fromMap(docData.data());
+      var statusDate = DateTime.parse(statusDetails.statusTime);
+      var difference = now.difference(statusDate);
+
+      if (difference.inDays >= 1) {
+        await _firebaseFirestore.collection("status").doc(docData.id).delete();
+      }
+      console.log(difference.inDays.toString());
+    }
   }
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -85,16 +104,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              height: 60,
-                              width: 60,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(30),
-                                color: Colors.grey.withOpacity(0.3),
-                              ),
-                              child: const Icon(
-                                UniconsLine.search,
-                                color: Colors.white,
+                            GestureDetector(
+                              onTap: () {},
+                              child: Container(
+                                height: 60,
+                                width: 60,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(30),
+                                  color: Colors.grey.withOpacity(0.3),
+                                ),
+                                child: const Icon(
+                                  UniconsLine.search,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                             isLoading
@@ -547,7 +569,7 @@ try {
         },
         leading: GestureDetector(
           onLongPress: () {
-            _customImageDialog(profileUrl, user.username);
+            UiHelper.customImageDialog(context, profileUrl);
           },
           child: CachedNetworkImage(
             imageUrl: profileUrl,
@@ -630,64 +652,7 @@ try {
     return const SizedBox();
   }
 
-  _customImageDialog(String imageUrl, String name) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: CachedNetworkImage(
-            imageUrl: imageUrl,
-            placeholder: (context, url) {
-              return Shimmer(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.grey,
-                      Colors.grey.shade100,
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  child: Container(
-                    height: 400,
-                    width: double.infinity,
-                    color: Colors.grey,
-                  ));
-            },
-            maxHeightDiskCache: 60,
-            maxWidthDiskCache: 60,
-            imageBuilder: (context, imageProvider) {
-              return Container(
-                height: 400,
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                ),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  image: DecorationImage(
-                    fit: BoxFit.cover,
-                    image: imageProvider,
-                  ),
-                ),
-              );
-            },
-          ),
-          title: Container(
-            height: 20,
-            width: double.infinity,
-            alignment: Alignment.center,
-            child: Text(
-              name,
-              style: const TextStyle(
-                  fontFamily: "poppins",
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600),
-            ),
-          ),
-        );
-      },
-    );
-  }
+  
 
   _onTapChat(
       {required String recieverId,

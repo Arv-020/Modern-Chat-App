@@ -3,6 +3,7 @@ import 'package:chat_app/models/user_model.dart';
 import 'package:chat_app/screens/chat_screen.dart';
 import 'package:chat_app/screens/getting_started_screen.dart';
 import 'package:chat_app/services/chat_services/chat_service.dart';
+import 'package:chat_app/ui_helper/ui_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -131,7 +132,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         },
         leading: GestureDetector(
           onLongPress: () {
-            _customImageDialog(profileUrl, user.username);
+            UiHelper.customImageDialog(context, profileUrl);
           },
           child: CachedNetworkImage(
             imageUrl: profileUrl,
@@ -214,64 +215,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
 
-_customImageDialog(String imageUrl, String name) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: CachedNetworkImage(
-            imageUrl: imageUrl,
-            placeholder: (context, url) {
-              return Shimmer(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.grey,
-                      Colors.grey.shade100,
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  child: Container(
-                    height: 400,
-                    width: double.infinity,
-                    color: Colors.grey,
-                  ));
-            },
-            maxHeightDiskCache: 60,
-            maxWidthDiskCache: 60,
-            imageBuilder: (context, imageProvider) {
-              return Container(
-                height: 400,
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                ),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  image: DecorationImage(
-                    fit: BoxFit.cover,
-                    image: imageProvider,
-                  ),
-                ),
-              );
-            },
-          ),
-          title: Container(
-            height: 20,
-            width: double.infinity,
-            alignment: Alignment.center,
-            child: Text(
-              name,
-              style: const TextStyle(
-                  fontFamily: "poppins",
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600),
-            ),
-          ),
-        );
-      },
-    );
-  }
+
   _onTapChat(
       {required String recieverId,
       required String recieverUserName,
